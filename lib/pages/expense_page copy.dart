@@ -1,14 +1,8 @@
-import 'package:expenses_tracker/pages/home_page.dart';
-import 'package:expenses_tracker/pages/transactions_page.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../databases/database_helper.dart';
 
 class ExpensePage extends StatefulWidget {
-  final Map<String, dynamic>? expense;
-
-  ExpensePage({this.expense});
-
   @override
   _ExpensePageState createState() => _ExpensePageState();
 }
@@ -16,53 +10,24 @@ class ExpensePage extends StatefulWidget {
 class _ExpensePageState extends State<ExpensePage> {
   final _formKey = GlobalKey<FormState>();
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  String _name = '';
+  double _amount = 0.0;
+  String _date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+  String _transactionType = 'Expense'; // Default value
+  String _paymentMethod = 'Cash'; // Default value for payment Method
 
-  late String _date;
-  late String _name;
-  late double _amount;
-  late String _transactionType;
-  late String _paymentMethod;
   int? _selectedCategory;
   int? _selectedSubcategory;
-
   List<Map<String, dynamic>> _categories = [];
   List<Map<String, dynamic>> _subcategories = [];
 
   TextEditingController _dateController = TextEditingController();
   TextEditingController _amountController = TextEditingController();
-  TextEditingController _descriptionController = TextEditingController();
-
   final FocusNode _amountFocusNode = FocusNode();
-  final _valueNotifier = ValueNotifier<String>('');
 
   @override
   void initState() {
     super.initState();
-    _loadCategories();
-    if (widget.expense != null) {
-      _date = DateFormat('yyyy-MM-dd')
-          .format(DateTime.parse(widget.expense!['transactionDate']));
-      _name = widget.expense!['description'];
-      _amount = widget.expense!['debit'] > 0.0
-          ? widget.expense!['debit'].toDouble()
-          : widget.expense!['credit'].toDouble();
-      _transactionType = widget.expense!['debit'] > 0 ? 'Expense' : 'Income';
-      _paymentMethod = widget.expense!['transactionType'];
-      _selectedCategory = widget.expense!['categoryId'];
-      _selectedSubcategory = widget.expense!['subCategoryId'];
-
-      _descriptionController.text = _name;
-      _loadSubcategories(_selectedCategory!);
-    } else {
-      _date = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      _name = '';
-      _amount = 0.0;
-      _transactionType = 'Expense';
-      _paymentMethod = 'Cash';
-      _selectedCategory = null;
-      _selectedSubcategory = null;
-    }
-
     _amountController.text = _amount.toString();
     _amountFocusNode.addListener(() {
       if (_amountFocusNode.hasFocus) {
@@ -74,13 +39,13 @@ class _ExpensePageState extends State<ExpensePage> {
     });
 
     _dateController.text = _date;
+    _loadCategories();
   }
 
   @override
   void dispose() {
     _dateController.dispose();
     _amountController.dispose();
-    _descriptionController.dispose();
     _amountFocusNode.dispose();
     super.dispose();
   }
@@ -115,26 +80,13 @@ class _ExpensePageState extends State<ExpensePage> {
         'categoryId': _selectedCategory,
         'subCategoryId': _selectedSubcategory
       };
-      if (widget.expense != null) {
-        // Update existing expense
-        expense['id'] = widget.expense!['id'];
-        await _dbHelper.updateExpense(expense);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Transaction updated successfully!'),
-            backgroundColor: Colors.grey[800],
-          ),
-        );
-      } else {
-        // Insert new expense
-        await _dbHelper.insertExpense(expense);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Transaction added successfully!'),
-            backgroundColor: Colors.green[800],
-          ),
-        );
-      }
+      await _dbHelper.insertExpense(expense);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Transaction added successfully!'),
+          backgroundColor: Colors.red,
+        ),
+      );
 
       // Reset form fields and state variables
       _formKey.currentState!.reset();
@@ -147,28 +99,17 @@ class _ExpensePageState extends State<ExpensePage> {
         _selectedCategory = null;
         _selectedSubcategory = null;
       });
-
-      // Redirect to TransactionsPage
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomePage(
-            body: TransactionsPage(),
-            currentIndex: 3,
-          ),
-        ),
-      );
     }
   }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.parse(_date),
+      initialDate: DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != DateTime.parse(_date)) {
+    if (picked != null && picked != DateTime.now()) {
       setState(() {
         _date = DateFormat('yyyy-MM-dd').format(picked);
         _dateController.text = _date;
@@ -181,8 +122,7 @@ class _ExpensePageState extends State<ExpensePage> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: Text(
-            widget.expense != null ? 'Edit Transaction' : 'Add Transaction'),
+        title: Text('Add Transaction'),
         backgroundColor: Colors.grey[200],
       ),
       body: SingleChildScrollView(
@@ -249,7 +189,6 @@ class _ExpensePageState extends State<ExpensePage> {
                         ],
                       ),
                       TextFormField(
-                        controller: _descriptionController,
                         decoration:
                             InputDecoration(labelText: 'Transaction Detail'),
                         validator: (value) {
@@ -349,8 +288,7 @@ class _ExpensePageState extends State<ExpensePage> {
                         value: _paymentMethod,
                         decoration:
                             InputDecoration(labelText: 'Payment Method'),
-                        items: ['Bank', 'Cash', 'Card', 'UPI']
-                            .map((String method) {
+                        items: ['Cash', 'Card', 'UPI'].map((String method) {
                           return DropdownMenuItem<String>(
                             value: method,
                             child: Text(method),
@@ -361,12 +299,12 @@ class _ExpensePageState extends State<ExpensePage> {
                             _paymentMethod = newValue!;
                           });
                         },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please select a payment method.';
-                          }
-                          return null;
-                        },
+                        // validator: (value) {
+                        //   if (value == null || value.isEmpty) {
+                        //     return 'Please select a payment method.';
+                        //   }
+                        //   return null;
+                        // },
                         onSaved: (value) {
                           _paymentMethod = value!;
                         },
@@ -374,9 +312,7 @@ class _ExpensePageState extends State<ExpensePage> {
                       SizedBox(height: 20),
                       ElevatedButton(
                         onPressed: _submitForm,
-                        child: Text(widget.expense != null
-                            ? 'Save Transaction'
-                            : 'Add Transaction'),
+                        child: Text('Add Transaction'),
                       ),
                     ],
                   ),

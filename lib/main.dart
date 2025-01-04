@@ -1,19 +1,25 @@
-import 'package:expenses_tracker/pages/home_page.dart';
+import 'package:expenses_tracker/pages/dashboard_page.dart';
 import 'package:flutter/material.dart';
+import 'package:expenses_tracker/pages/home_page.dart';
+import 'package:expenses_tracker/pages/transactions_page.dart';
 
 void main() {
-  runApp(const ExpensesTracker());
+  runApp(MyApp());
 }
 
-class ExpensesTracker extends StatelessWidget {
-  const ExpensesTracker({super.key});
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Expenses Tracker',
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: HomePage(
+        body: DashboardPage(),
+        currentIndex: 0,
+      ),
     );
   }
 }

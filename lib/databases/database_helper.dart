@@ -376,7 +376,9 @@ class DatabaseHelper {
       t.credit,
       t.transactionType,
       c.categoryName,
-      s.subCategoryName
+      s.subCategoryName,
+      c.categoryId,
+      s.subCategoryId
     FROM
       transactions t
     JOIN
