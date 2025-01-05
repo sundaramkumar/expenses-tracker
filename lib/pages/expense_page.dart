@@ -183,7 +183,10 @@ class _ExpensePageState extends State<ExpensePage> {
       appBar: AppBar(
         title: Text(
             widget.expense != null ? 'Edit Transaction' : 'Add Transaction'),
-        backgroundColor: Colors.grey[200],
+        // backgroundColor: Colors.grey[200],
+        backgroundColor: Colors.red,
+        toolbarHeight: 45,
+        foregroundColor: Colors.white,
       ),
       body: SingleChildScrollView(
         physics: NeverScrollableScrollPhysics(),

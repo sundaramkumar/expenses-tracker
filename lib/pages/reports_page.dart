@@ -6,7 +6,9 @@ class ReportsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Reports'),
-        backgroundColor: Colors.grey[200],
+        backgroundColor: Colors.red,
+        toolbarHeight: 45,
+        foregroundColor: Colors.white,
       ),
       body: Container(
         color: Colors.grey[200],

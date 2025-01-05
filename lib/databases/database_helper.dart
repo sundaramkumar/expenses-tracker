@@ -395,7 +395,7 @@ class DatabaseHelper {
     Database db = await database;
     return await db.query(
       'transactions',
-      where: 'date >= ? AND date <= ?',
+      where: 'transactionDate >= ? AND transactionDate <= ?',
       whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
     );
   }
@@ -408,7 +408,7 @@ class DatabaseHelper {
 
     return await db.query(
       'transactions',
-      where: 'date >= ? AND date <= ?',
+      where: 'transactionDate >= ? AND transactionDate <= ?',
       whereArgs: [
         firstDayOfMonth.toIso8601String(),
         lastDayOfMonth.toIso8601String()

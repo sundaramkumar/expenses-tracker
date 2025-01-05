@@ -45,11 +45,11 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Expenses Tracker'),
-        backgroundColor: Colors.red,
-        foregroundColor: Colors.white,
-      ),
+      // appBar: AppBar(
+      //   title: Text('Expenses Tracker'),
+      //   backgroundColor: Colors.red,
+      //   foregroundColor: Colors.white,
+      // ),
       body: widget.body,
       // bottomNavigationBar: CurvedNavigationBar(
       //   color: Colors.white,
@@ -81,7 +81,7 @@ class _HomePageState extends State<HomePage> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.add),
-            label: 'Add Expense',
+            label: 'Add New',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.list),
@@ -93,11 +93,11 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
         currentIndex: widget.currentIndex,
-        selectedItemColor: Colors.amber[800],
+        selectedItemColor: Colors.white,
         showUnselectedLabels: true, // show all the labels
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.red,
-        unselectedItemColor: Colors.white,
+        unselectedItemColor: Colors.amber[800],
         onTap: _onItemTapped,
       ),
     );

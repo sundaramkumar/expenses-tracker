@@ -41,6 +41,7 @@ dependencies:
   intl: ^0.20.1
   path: ^1.9.0
   liquid_pull_to_refresh: ^3.0.1
+  fl_chart: ^0.70.0
 
 dev_dependencies:
   flutter_test:
