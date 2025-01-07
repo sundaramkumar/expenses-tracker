@@ -1,7 +1,10 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:fl_chart/fl_chart.dart';
+// import 'package:fl_chart/fl_chart.dart';
 import '../databases/database_helper.dart';
+import 'package:pie_chart/pie_chart.dart';
 
 class DashboardPage extends StatefulWidget {
   @override
@@ -37,6 +40,7 @@ class _DashboardPageState extends State<DashboardPage> {
         totalIncome += transaction['credit'];
       }
     }
+
     setState(() {
       _transactions = transactions;
       _totalIncome = totalIncome;
@@ -117,63 +121,50 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       );
     }
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: AspectRatio(
-        aspectRatio: 2,
-        child: BarChart(
-          BarChartData(
-            alignment: BarChartAlignment.spaceAround,
-            barGroups: [
-              BarChartGroupData(
-                x: 0,
-                barRods: [
-                  BarChartRodData(
-                    toY: _totalIncome,
-                    color: Colors.green,
-                  ),
-                ],
-                showingTooltipIndicators: [0],
-              ),
-              BarChartGroupData(
-                x: 1,
-                barRods: [
-                  BarChartRodData(
-                    toY: _totalExpenses,
-                    color: Colors.red,
-                  ),
-                ],
-                showingTooltipIndicators: [0],
-              ),
-            ],
-            titlesData: FlTitlesData(
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(minIncluded: true),
-              ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (double value, TitleMeta meta) {
-                    switch (value.toInt()) {
-                      case 0:
-                        return Text('Income');
-                      case 1:
-                        return Text('Expenses');
-                      default:
-                        return Text('');
-                    }
-                  },
-                ),
-              ),
+
+    Map<String, double> dataMap = {
+      "Income": _totalIncome,
+      "Expenses": _totalExpenses,
+    };
+
+    var colorList = [
+      Colors.indigoAccent,
+      Colors.redAccent,
+    ];
+    return Column(
+      children: [
+        SizedBox(height: 20),
+        PieChart(
+          dataMap: dataMap,
+          animationDuration: Duration(milliseconds: 800),
+          chartLegendSpacing: 32,
+          chartRadius: MediaQuery.of(context).size.width / 3.2,
+          colorList: colorList,
+          initialAngleInDegree: 0,
+          chartType: ChartType.ring,
+          ringStrokeWidth: 32,
+          centerText: "",
+          legendOptions: LegendOptions(
+            showLegendsInRow: false,
+            legendPosition: LegendPosition.right,
+            showLegends: true,
+            legendShape: BoxShape.circle,
+            legendTextStyle: TextStyle(
+              fontWeight: FontWeight.bold,
             ),
-            borderData: FlBorderData(
-              show: true,
-              border: Border.all(color: Colors.black, width: 1),
-            ),
-            gridData: FlGridData(show: true),
           ),
+          chartValuesOptions: ChartValuesOptions(
+            showChartValueBackground: true,
+            showChartValues: true,
+            showChartValuesInPercentage: false,
+            showChartValuesOutside: false,
+            decimalPlaces: 2,
+          ),
+          // gradientList: ---To add gradient colors---
+          // emptyColorGradient: ---Empty Color gradient---
         ),
-      ),
+        SizedBox(height: 20),
+      ],
     );
   }
 
@@ -195,7 +186,7 @@ class _DashboardPageState extends State<DashboardPage> {
               width: double.infinity,
               child: DataTable(
                 horizontalMargin: 15,
-                headingRowHeight: 20,
+                headingRowHeight: 25,
                 border: TableBorder.symmetric(
                     inside: BorderSide(width: 1, color: Colors.transparent),
                     outside: BorderSide(width: 1, color: Colors.grey)),
@@ -260,7 +251,7 @@ class _DashboardPageState extends State<DashboardPage> {
               width: double.infinity,
               child: DataTable(
                 horizontalMargin: 15,
-                headingRowHeight: 20,
+                headingRowHeight: 25,
                 border: TableBorder.symmetric(
                     inside: BorderSide(width: 1, color: Colors.transparent),
                     outside: BorderSide(width: 1, color: Colors.grey)),

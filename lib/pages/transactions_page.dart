@@ -25,7 +25,6 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   Future<void> _fetchTransactions() async {
     final transactions = await dbHelper.getExpenses();
-    print(transactions);
     setState(() {
       _transactions = transactions;
     });
@@ -109,7 +108,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
 
   Widget _buildTransactionRow(Map<String, dynamic> transaction) {
     final transactionCardContent = Container(
-      margin: EdgeInsets.all(10.0),
+      margin: EdgeInsets.all(7.0),
       constraints: BoxConstraints.expand(),
       child: Container(
         // height: 4.0,
@@ -130,7 +129,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                     ),
                     SizedBox(height: 5.0),
                     Text(transaction['subCategoryName'].toString()),
-                    SizedBox(height: 5.0),
+                    // SizedBox(height: 5.0),
                   ],
                 ),
                 Column(
@@ -165,7 +164,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 5),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
@@ -192,7 +191,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
-                        SizedBox(height: 10),
+                        SizedBox(height: 5),
                         Row(
                           children: [],
                         ),

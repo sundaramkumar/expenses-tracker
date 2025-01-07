@@ -1,5 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'category.dart';
+import 'subcategory.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -57,6 +59,17 @@ class DatabaseHelper {
         "categoryId"	INTEGER NOT NULL,
         "subCategoryName"	TEXT NOT NULL,
         "userId"	INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE "profile" (
+        "userId"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        "userName"	TEXT NOT NULL,
+        "userEmail"	TEXT NOT NULL,
+        "mobile"	TEXT NOT NULL,
+        "plan"	TEXT DEFAULT 'FREE',
+        "planType"	TEXT DEFAULT 'DEFAULT'
       )
     ''');
 
@@ -437,5 +450,86 @@ class DatabaseHelper {
     Database db = await database;
     return await db
         .query('subcategory', where: 'categoryId = ?', whereArgs: [categoryId]);
+  }
+
+  Future<List<Category>> getCategoriesList() async {
+    Database db = await database;
+    var categories =
+        await db.rawQuery('SELECT * FROM category ORDER BY categoryName ASC');
+    List<Category> categoryList = categories.isNotEmpty
+        ? categories.map((c) => Category.fromMap(c)).toList()
+        : [];
+    categoryList.sort((a, b) => a.categoryName.compareTo(b.categoryName));
+
+    return categoryList;
+  }
+
+  Future<List<Subcategory>> getSubcategoriesList() async {
+    Database db = await database;
+    var subcategories = await db.query('subcategory');
+    List<Subcategory> subcategoryList = subcategories.isNotEmpty
+        ? subcategories.map((s) => Subcategory.fromMap(s)).toList()
+        : [];
+    return subcategoryList;
+  }
+
+  Future<int> deleteCategory(categoryId) async {
+    Database db = await database;
+    return await db
+        .delete('category', where: 'categoryId = ?', whereArgs: [categoryId]);
+  }
+
+  Future<int> updateCategory(int categoryId, String categoryName) async {
+    Database db = await database;
+
+    return await db.rawInsert("UPDATE category SET categoryName='$categoryName'"
+        " WHERE categoryId=+$categoryId");
+  }
+
+  Future<int> addCategory(String categoryName) async {
+    Database db = await database;
+    int userId = 1;
+    return await db.rawInsert(
+        'INSERT INTO category'
+        '(categoryName, userId) '
+        'VALUES(?, ?)',
+        [categoryName, userId]);
+  }
+
+  Future<int> getRowsCount(String table) async {
+    //database connection
+    Database db = await database;
+    var x = await db.rawQuery('SELECT COUNT (*) from $table');
+    int count = Sqflite.firstIntValue(x) as int;
+    return count;
+  }
+
+  Future<void> saveProfile(
+      String userName, String userEmail, String mobile) async {
+    Database db = await database;
+    int userId = 1;
+    await db.rawInsert(
+        'INSERT INTO profile'
+        '(userId, userName, userEmail, mobile, plan, planType) '
+        'VALUES(?,?, ?, ?, ?, ?)',
+        [userId, userName, userEmail, mobile, 'FREE', 'DEFAULT']);
+  }
+
+  Future<void> updateProfile(
+      String userName, String userEmail, String mobile) async {
+    Database db = await database;
+    await db.rawInsert(
+        "UPDATE profile SET userName='$userName', userEmail='$userEmail', mobile='$mobile'"
+        " WHERE userId=1");
+  }
+
+  Future<List<Map<String, dynamic>>> loadProfile() async {
+    Database db = await database;
+    return await db.rawQuery('''
+      SELECT
+      userId,userName,userEmail,mobile,plan,planType
+      FROM
+        profile
+    ''');
   }
 }

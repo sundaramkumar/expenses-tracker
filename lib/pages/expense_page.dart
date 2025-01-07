@@ -33,7 +33,7 @@ class _ExpensePageState extends State<ExpensePage> {
   TextEditingController _descriptionController = TextEditingController();
 
   final FocusNode _amountFocusNode = FocusNode();
-  final _valueNotifier = ValueNotifier<String>('');
+  // final _valueNotifier = ValueNotifier<String>('');
 
   @override
   void initState() {
