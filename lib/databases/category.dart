@@ -7,7 +7,7 @@ class Category {
     required this.categoryName,
   });
 
-  factory Category.fromMap(Map<String, dynamic> json) => new Category(
+  factory Category.fromMap(Map<String, dynamic> json) => Category(
         categoryId: json['categoryId'],
         categoryName: json['categoryName'],
       );

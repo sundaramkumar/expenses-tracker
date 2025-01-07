@@ -1,4 +1,5 @@
 import 'package:expenses_tracker/databases/database_helper.dart';
+import 'package:expenses_tracker/utils/string_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../databases/category.dart';
@@ -165,6 +166,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
       builder: (context) {
         return DialogBox(
           dialogTitle: 'Edit Category',
+          dialogType: 'CATEGORY',
           taskInputController: _categoryNamecontroller, //.text.toString(),
           // fieldValue: category.categoryName,
           onSave: editCategory,
@@ -190,7 +192,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
   }
 
   void saveNewCategory() {
-    _dbHelper.addCategory(_categoryNamecontroller.text);
+    _dbHelper.addCategory(_categoryNamecontroller.text.capitalize());
     _fetchCategories();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -202,8 +204,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
   }
 
   void editCategory() async {
-    await _dbHelper.updateCategory(
-        _selectedCategory.categoryId, _categoryNamecontroller.text);
+    await _dbHelper.updateCategory(_selectedCategory.categoryId,
+        _categoryNamecontroller.text.capitalize());
     _fetchCategories();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

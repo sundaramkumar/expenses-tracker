@@ -3,8 +3,6 @@ import 'package:expenses_tracker/pages/subcategories_page.dart';
 import 'package:expenses_tracker/pages/userprofile_page.dart';
 import 'package:flutter/material.dart';
 import '../databases/database_helper.dart';
-import '../databases/category.dart';
-import '../databases/subcategory.dart';
 
 class SettingsPage extends StatelessWidget {
   final DatabaseHelper _dbHelper = DatabaseHelper();
@@ -22,6 +20,7 @@ class SettingsPage extends StatelessWidget {
         color: Colors.grey[200],
         child: ListView(
           children: [
+            SizedBox(height: 20),
             Card(
               child: ListTile(
                 shape: RoundedRectangleBorder(
@@ -74,6 +73,8 @@ class SettingsPage extends StatelessWidget {
                 },
               ),
             ),
+            SizedBox(height: 100),
+            Center(child: Text('Developed By Kumar Sundaram')),
           ],
         ),
       ),

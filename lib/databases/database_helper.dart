@@ -464,28 +464,6 @@ class DatabaseHelper {
     return categoryList;
   }
 
-  Future<List<Subcategory>> getSubcategoriesList() async {
-    Database db = await database;
-    var subcategories = await db.query('subcategory');
-    List<Subcategory> subcategoryList = subcategories.isNotEmpty
-        ? subcategories.map((s) => Subcategory.fromMap(s)).toList()
-        : [];
-    return subcategoryList;
-  }
-
-  Future<int> deleteCategory(categoryId) async {
-    Database db = await database;
-    return await db
-        .delete('category', where: 'categoryId = ?', whereArgs: [categoryId]);
-  }
-
-  Future<int> updateCategory(int categoryId, String categoryName) async {
-    Database db = await database;
-
-    return await db.rawInsert("UPDATE category SET categoryName='$categoryName'"
-        " WHERE categoryId=+$categoryId");
-  }
-
   Future<int> addCategory(String categoryName) async {
     Database db = await database;
     int userId = 1;
@@ -496,6 +474,87 @@ class DatabaseHelper {
         [categoryName, userId]);
   }
 
+  Future<int> updateCategory(int categoryId, String categoryName) async {
+    Database db = await database;
+
+    return await db.rawInsert("UPDATE category SET categoryName='$categoryName'"
+        " WHERE categoryId=+$categoryId");
+  }
+
+  /// Delete a category and all its transactions and subcategories
+  ///
+  /// This function first deletes all transactions and subcategories
+  /// associated with the category, then deletes the category itself.
+  ///
+  /// Returns the number of rows affected in the database
+  Future<int> deleteCategory(int categoryId) async {
+    Database db = await database;
+
+    /// delete all transactions with the categoryId
+    await db.delete('transactions',
+        where: 'categoryId = ?', whereArgs: [categoryId]);
+
+    /// delete all subcategories with the categoryId
+    await db.delete('subcategory',
+        where: 'categoryId = ?', whereArgs: [categoryId]);
+
+    /// delete the category row from category table
+    return await db
+        .delete('category', where: 'categoryId = ?', whereArgs: [categoryId]);
+  }
+
+  /// Get all subcategories from the database
+  ///
+  /// Returns a list of Subcategory objects, or an empty list if the database
+  /// is empty.
+  Future<List<Subcategory>> getSubcategoriesList() async {
+    Database db = await database;
+    var subcategories = await db.query('subcategory');
+    List<Subcategory> subcategoryList = subcategories.isNotEmpty
+        ? subcategories.map((s) => Subcategory.fromMap(s)).toList()
+        : [];
+    return subcategoryList;
+  }
+
+  Future<int> addSubCategory(int categoryId, String subCategoryName) async {
+    Database db = await database;
+    int userId = 1;
+    return await db.rawInsert(
+        'INSERT INTO subcategory'
+        '(categoryId, subCategoryName, userId) '
+        'VALUES(?,?, ?)',
+        [categoryId, subCategoryName, userId]);
+  }
+
+  Future<int> updateSubCategory(
+      int subCategoryId, String subCategoryName) async {
+    Database db = await database;
+
+    return await db
+        .rawUpdate("UPDATE subcategory SET subCategoryName='$subCategoryName'"
+            " WHERE subCategoryId=+$subCategoryId");
+  }
+
+  Future<int> deleteSubCategory(int subCategoryId) async {
+    Database db = await database;
+
+    /// delete all transactions with the categoryId
+    await db.delete('transactions',
+        where: 'subCategoryId = ?', whereArgs: [subCategoryId]);
+
+    /// delete all subcategories with the subCategoryId
+    return await db.delete('subcategory',
+        where: 'subCategoryId = ?', whereArgs: [subCategoryId]);
+  }
+
+  /// Returns the number of rows in the given table.
+  ///
+  /// The table name should be a valid table name in the database.
+  /// The function returns the number of rows in the table.
+  ///
+  /// Example:
+  ///
+  ///
   Future<int> getRowsCount(String table) async {
     //database connection
     Database db = await database;
@@ -504,6 +563,10 @@ class DatabaseHelper {
     return count;
   }
 
+  /// Save the user profile to the database.
+  ///
+  /// Creates a new profile row in the database with the given parameters.
+  /// The userId is hardcoded to 1 because there is only one user.
   Future<void> saveProfile(
       String userName, String userEmail, String mobile) async {
     Database db = await database;
@@ -515,14 +578,28 @@ class DatabaseHelper {
         [userId, userName, userEmail, mobile, 'FREE', 'DEFAULT']);
   }
 
+  /// Update the user profile in the database.
+  ///
+  /// Updates the user's name, email and mobile number in the database.
+  /// The userId is hardcoded to 1 because there is only one user.
+  ///
   Future<void> updateProfile(
       String userName, String userEmail, String mobile) async {
     Database db = await database;
-    await db.rawInsert(
+    await db.rawUpdate(
         "UPDATE profile SET userName='$userName', userEmail='$userEmail', mobile='$mobile'"
         " WHERE userId=1");
   }
 
+  /// load profile from database
+  ///
+  /// returns a list of maps containing:
+  ///   - userId
+  ///   - userName
+  ///   - userEmail
+  ///   - mobile
+  ///   - plan
+  ///   - planType
   Future<List<Map<String, dynamic>>> loadProfile() async {
     Database db = await database;
     return await db.rawQuery('''
