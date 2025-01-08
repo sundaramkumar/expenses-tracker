@@ -251,15 +251,6 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-/*************  ✨ Codeium Command ⭐  *************/
-  /// Generates a line chart widget displaying the expenses over a selected
-  /// date range. The chart includes dynamic Y-axis scaling based on the
-  /// maximum expense value and labels on both the X and Y axes. The X-axis
-  /// labels represent the dates of transactions, while the Y-axis labels
-  /// represent the expense amounts. The chart is styled with a bold title
-  /// and a light red area under the curve to highlight the expenses.
-
-/******  138fc70a-5ddd-4fae-99d3-69c7510df473  *******/
   Widget _generateExpenseChart() {
     return Column(
       children: [
