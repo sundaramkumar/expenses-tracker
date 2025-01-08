@@ -3,10 +3,9 @@
 A new Flutter project.
 
 ##todo
-cat name should be max 25 chars
-subcat name should be max 25 chars
-add about us details
-is it possible to show the setting as like tiles
+paid plan
+budget details
+analysis with budget vs actual
 
 ## Getting Started
 

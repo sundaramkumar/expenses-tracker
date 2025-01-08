@@ -28,7 +28,7 @@ class DialogBox extends StatelessWidget {
     return AlertDialog(
       backgroundColor: Colors.grey[300],
       content: Container(
-        height: dialogType == 'CATEGORY' ? 135 : 200,
+        height: dialogType == 'CATEGORY' ? 155 : 220,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -50,6 +50,7 @@ class DialogBox extends StatelessWidget {
     if (dialogType == 'CATEGORY') {
       return TextField(
         autofocus: true,
+        maxLength: 25,
         controller: taskInputController,
         decoration: const InputDecoration(
             border: UnderlineInputBorder(),
@@ -84,6 +85,7 @@ class DialogBox extends StatelessWidget {
                 ),
                 TextField(
                   autofocus: true,
+                  maxLength: 25,
                   controller: taskInputController,
                   decoration: const InputDecoration(
                       border: UnderlineInputBorder(),

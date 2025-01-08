@@ -1,8 +1,5 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-// import 'package:fl_chart/fl_chart.dart';
 import '../databases/database_helper.dart';
 import 'package:pie_chart/pie_chart.dart';
 
@@ -160,8 +157,6 @@ class _DashboardPageState extends State<DashboardPage> {
             showChartValuesOutside: false,
             decimalPlaces: 2,
           ),
-          // gradientList: ---To add gradient colors---
-          // emptyColorGradient: ---Empty Color gradient---
         ),
         SizedBox(height: 20),
       ],
@@ -169,11 +164,11 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildExpensesList() {
-    if (_transactions.isEmpty) {
-      return Container();
-    }
     var _expenseTransactions =
         _transactions.where((transaction) => transaction['debit'] > 0).toList();
+    if (_expenseTransactions.isEmpty) {
+      return Container();
+    }
     return Expanded(
       child: SingleChildScrollView(
         scrollDirection: Axis.vertical,

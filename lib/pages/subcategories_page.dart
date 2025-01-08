@@ -131,15 +131,19 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
           dialogTitle: 'Add New SubCategory',
           dialogType: 'SUBCATEGORY',
           taskInputController: _subCategoryNamecontroller,
-          onSave: saveNewCategory,
+          onSave: saveNewSubCategory,
           onCancel: () => Navigator.of(context).pop(),
         );
       },
     ); // Add your logic to add a new category here
   }
 
-  void saveNewCategory() {
-    _dbHelper.addSubCategory(1, _subCategoryNamecontroller.text.capitalize());
+  void saveNewSubCategory() {
+    _dbHelper.addSubCategory(
+        1,
+        _subCategoryNamecontroller.text
+            .replaceAll(RegExp('[^A-Za-z0-9]'), '')
+            .capitalize());
     _fetchSubCategories();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -167,8 +171,11 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
   }
 
   void editSubCategory() async {
-    await _dbHelper.updateSubCategory(_selectedSubCategory.subCategoryId,
-        _subCategoryNamecontroller.text.capitalize());
+    await _dbHelper.updateSubCategory(
+        _selectedSubCategory.subCategoryId,
+        _subCategoryNamecontroller.text
+            .replaceAll(RegExp('[^A-Za-z0-9]'), '')
+            .capitalize());
     _fetchSubCategories();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
