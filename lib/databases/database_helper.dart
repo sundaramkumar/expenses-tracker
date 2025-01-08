@@ -408,6 +408,7 @@ class DatabaseHelper {
     Database db = await database;
     return await db.query(
       'transactions',
+      orderBy: 'transactionDate DESC',
       where: 'transactionDate >= ? AND transactionDate <= ?',
       whereArgs: [startDate.toIso8601String(), endDate.toIso8601String()],
     );
