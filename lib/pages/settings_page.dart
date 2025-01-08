@@ -2,6 +2,7 @@ import 'package:expenses_tracker/pages/categories_page.dart';
 import 'package:expenses_tracker/pages/subcategories_page.dart';
 import 'package:expenses_tracker/pages/userprofile_page.dart';
 import 'package:flutter/material.dart';
+import 'package:text_scroll/text_scroll.dart';
 // import '../databases/database_helper.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -101,7 +102,19 @@ class SettingsPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: 100),
-            Center(child: Text('Developed By Kumar Sundaram')),
+            // TextScroll('Developed By Kumar Sundaram'),
+            TextScroll(
+              textAlign: TextAlign.end,
+              'Daily Expenses Tracker developed By Kumar Sundaram. Copyright © 2025. All rights reserved.',
+              velocity: const Velocity(pixelsPerSecond: Offset(25, 0)),
+              delayBefore: const Duration(milliseconds: 500),
+              // numberOfReps: 5,
+              pauseBetween: const Duration(milliseconds: 50),
+              style: const TextStyle(color: Colors.black, fontSize: 10),
+              selectable: true,
+              // mode: TextScrollMode.bouncing,
+              // overflow: TextOverflow.ellipsis,
+            )
           ],
         ),
       ),
