@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../databases/database_helper.dart';
 
 class ReportsPage extends StatefulWidget {
@@ -15,6 +16,13 @@ class _ReportsPageState extends State<ReportsPage> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   final NumberFormat _currencyFormat =
       NumberFormat.currency(symbol: '', decimalDigits: 2);
+  List<FlSpot> expenseSpots = [];
+  List<FlSpot> _expenseSpots = [];
+  List<String> dateLabels = [];
+  int index = 0;
+  Map<String, double> dailyExpenses = {};
+  double maxExpense = 0.0;
+  double interval = 1.0;
 
   @override
   void initState() {
@@ -35,6 +43,36 @@ class _ReportsPageState extends State<ReportsPage> {
         }).toList();
       });
     }
+
+    // reset variables
+    dailyExpenses = {};
+    expenseSpots = [];
+    _expenseSpots = [];
+    dateLabels = [];
+
+    // Calculate daily expenses
+    _transactions.where((txn) => txn['debit'] > 0).forEach((txn) {
+      String dateKey = txn['transactionDate'];
+      dailyExpenses.update(dateKey, (value) => value + txn['debit'].toDouble(),
+          ifAbsent: () => txn['debit'].toDouble());
+    });
+
+    dailyExpenses.forEach((date, amount) {
+      expenseSpots.add(FlSpot(index.toDouble(), amount));
+      dateLabels.add(date);
+      index++;
+    });
+
+    setState(() {
+      _expenseSpots = expenseSpots;
+    });
+
+    // Calculate max expense value for Y-axis limit
+    maxExpense = dailyExpenses.isNotEmpty
+        ? dailyExpenses.values.reduce((a, b) => a > b ? a : b)
+        : 100;
+    interval =
+        (maxExpense / 5).ceilToDouble(); // Dynamic interval for better scaling
   }
 
   Future<void> _selectDate(BuildContext context, bool isFromDate) async {
@@ -74,7 +112,15 @@ class _ReportsPageState extends State<ReportsPage> {
             _transactionType(context),
             SizedBox(height: 16),
             Expanded(
-              child: _generateDataTable(context),
+              child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    children: [
+                      if (_filterOption != 'Income') _generateExpenseChart(),
+                      SizedBox(height: 16),
+                      _generateDataTable(context),
+                    ],
+                  )),
             ),
           ],
         ),
@@ -202,6 +248,99 @@ class _ReportsPageState extends State<ReportsPage> {
           ]);
         }).toList(),
       ),
+    );
+  }
+
+/*************  ✨ Codeium Command ⭐  *************/
+  /// Generates a line chart widget displaying the expenses over a selected
+  /// date range. The chart includes dynamic Y-axis scaling based on the
+  /// maximum expense value and labels on both the X and Y axes. The X-axis
+  /// labels represent the dates of transactions, while the Y-axis labels
+  /// represent the expense amounts. The chart is styled with a bold title
+  /// and a light red area under the curve to highlight the expenses.
+
+/******  138fc70a-5ddd-4fae-99d3-69c7510df473  *******/
+  Widget _generateExpenseChart() {
+    return Column(
+      children: [
+        Text('Expenses Chart', style: TextStyle(fontWeight: FontWeight.bold)),
+        Container(
+          height: 300,
+          child: LineChart(
+            LineChartData(
+              titlesData: FlTitlesData(
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 40,
+                    getTitlesWidget: (value, meta) {
+                      int index = value.toInt();
+                      if (index >= 0 && index < dateLabels.length) {
+                        return Text(
+                          DateFormat('MM/dd').format(DateFormat('yyyy-MM-dd')
+                              .parse(dateLabels[index])),
+                          style: const TextStyle(fontSize: 10),
+                          textAlign: TextAlign.center,
+                        );
+                      }
+                      return const Text('');
+                    },
+                  ),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    interval: interval, // Set dynamic interval for Y-axis
+                    reservedSize: 40,
+                    getTitlesWidget: (value, meta) {
+                      return Text('${value.toInt()}',
+                          style: const TextStyle(fontSize: 10));
+                    },
+                  ),
+                ),
+                topTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              ),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: true,
+                horizontalInterval: interval,
+                getDrawingHorizontalLine: (value) {
+                  return FlLine(
+                    color: Colors.grey.withAlpha(51),
+                    strokeWidth: 1,
+                    dashArray: [5, 5],
+                  );
+                },
+              ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: _expenseSpots, // Set expense data points
+                  isCurved: true,
+                  color: Colors.redAccent,
+                  barWidth: 2,
+                  dotData: const FlDotData(
+                      show: true), // Show dots on each data point
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: Colors.redAccent
+                        .withAlpha(51), // Light red area under the curve
+                  ),
+                ),
+              ],
+              borderData: FlBorderData(
+                show: true,
+                border: Border.all(color: Colors.black.withAlpha(76)),
+              ),
+              minY: 0,
+              maxY: maxExpense +
+                  (interval * 2), // Add extra space above the highest expense
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

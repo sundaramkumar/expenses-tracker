@@ -2,11 +2,6 @@
 
 A new Flutter project.
 
-##todo
-paid plan
-budget details
-analysis with budget vs actual
-
 ## Getting Started
 
 This project is a starting point for a Flutter application.

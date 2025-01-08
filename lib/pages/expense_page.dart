@@ -108,7 +108,7 @@ class _ExpensePageState extends State<ExpensePage> {
       Map<String, dynamic> expense = {
         'userId': 1, // as this is a single user app
         'transactionDate': _date,
-        'description': _name,
+        'description': _name.trim(),
         'debit': _transactionType == 'Expense' ? _amount : 0.0,
         'credit': _transactionType == 'Income' ? _amount : 0.0,
         'transactionType': _paymentMethod,

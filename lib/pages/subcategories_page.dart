@@ -143,6 +143,7 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
         1,
         _subCategoryNamecontroller.text
             .replaceAll(RegExp('[^A-Za-z0-9]'), '')
+            .trim()
             .capitalize());
     _fetchSubCategories();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -175,6 +176,7 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
         _selectedSubCategory.subCategoryId,
         _subCategoryNamecontroller.text
             .replaceAll(RegExp('[^A-Za-z0-9]'), '')
+            .trim()
             .capitalize());
     _fetchSubCategories();
     ScaffoldMessenger.of(context).showSnackBar(

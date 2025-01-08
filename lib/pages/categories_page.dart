@@ -194,6 +194,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
   void saveNewCategory() {
     _dbHelper.addCategory(_categoryNamecontroller.text
         .replaceAll(RegExp('[^A-Za-z0-9]'), '')
+        .trim()
         .capitalize());
     _fetchCategories();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -210,6 +211,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
         _selectedCategory.categoryId,
         _categoryNamecontroller.text
             .replaceAll(RegExp('[^A-Za-z0-9]'), '')
+            .trim()
             .capitalize());
     _fetchCategories();
     ScaffoldMessenger.of(context).showSnackBar(
