@@ -116,7 +116,8 @@ class _ReportsPageState extends State<ReportsPage> {
                   scrollDirection: Axis.vertical,
                   child: Column(
                     children: [
-                      if (_filterOption != 'Income') _generateExpenseChart(),
+                      if (_filterOption != 'Income' && _transactions.isNotEmpty)
+                        _generateExpenseChart(),
                       SizedBox(height: 16),
                       _generateDataTable(context),
                     ],
@@ -129,63 +130,78 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Widget _dateFilters(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: TextFormField(
-            readOnly: true,
-            decoration: InputDecoration(
-              labelText: 'From Date',
-              hintStyle: TextStyle(fontSize: 8, color: Colors.grey),
-              hintText: _fromDate == null
-                  ? 'Select Date'
-                  : DateFormat('yyyy-MM-dd').format(_fromDate!),
+    return InputDecorator(
+      decoration: InputDecoration(
+        contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
+        labelText: 'Select Date Range',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              readOnly: true,
+              decoration: InputDecoration(
+                // labelText: 'From Date',
+                hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
+                hintText: _fromDate == null
+                    ? 'From Date'
+                    : DateFormat('yyyy-MM-dd').format(_fromDate!),
+              ),
+              onTap: () => _selectDate(context, true),
             ),
-            onTap: () => _selectDate(context, true),
           ),
-        ),
-        SizedBox(width: 16),
-        Expanded(
-          child: TextFormField(
-            readOnly: true,
-            decoration: InputDecoration(
-              labelText: 'To Date',
-              hintStyle: TextStyle(fontSize: 8, color: Colors.grey),
-              hintText: _toDate == null
-                  ? 'Select Date'
-                  : DateFormat('yyyy-MM-dd').format(_toDate!),
+          SizedBox(width: 16),
+          Expanded(
+            child: TextFormField(
+              readOnly: true,
+              decoration: InputDecoration(
+                // labelText: 'To Date',
+                hintStyle: TextStyle(fontSize: 12, color: Colors.grey),
+                hintText: _toDate == null
+                    ? 'To Date'
+                    : DateFormat('yyyy-MM-dd').format(_toDate!),
+              ),
+              onTap: () => _selectDate(context, false),
             ),
-            onTap: () => _selectDate(context, false),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _transactionType(BuildContext context) {
-    return Row(
-      children: [
-        Text('Transaction Type: '),
-        DropdownButton<String>(
-          value: _filterOption,
-          onChanged: (String? newValue) {
-            setState(() {
-              _filterOption = newValue!;
-            });
-            _fetchTransactions();
-          },
-          items: <String>['Income', 'Expenses', 'Both']
-              .map<DropdownMenuItem<String>>((String value) {
-            return DropdownMenuItem<String>(
-              value: value,
-              child: Text(
-                value,
-                style: TextStyle(fontWeight: FontWeight.normal),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
+    return InputDecorator(
+      decoration: InputDecoration(
+        contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 5.0),
+        labelText: 'Transaction Type',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(5.0)),
+      ),
+      child: Row(
+        children: [
+          // Text('Transaction Type:'),
+          SizedBox(width: 10),
+          DropdownButton<String>(
+            value: _filterOption,
+            onChanged: (String? newValue) {
+              setState(() {
+                _filterOption = newValue!;
+              });
+              _fetchTransactions();
+            },
+            items: <String>['Income', 'Expenses', 'Both']
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(
+                  value,
+                  style: TextStyle(fontWeight: FontWeight.normal),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 

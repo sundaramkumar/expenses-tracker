@@ -251,128 +251,187 @@ class _ExpensePageState extends State<ExpensePage> {
                           ),
                         ],
                       ),
-                      TextFormField(
-                        controller: _descriptionController,
-                        decoration:
-                            InputDecoration(labelText: 'Transaction Detail'),
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return 'Please enter the detail.';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _name = value!;
-                        },
-                      ),
-                      DropdownButtonFormField<int>(
-                        value: _selectedCategory,
-                        decoration: InputDecoration(labelText: 'Category'),
-                        items: _categories.map((category) {
-                          return DropdownMenuItem<int>(
-                            value: category['categoryId'],
-                            child: Text(category['categoryName']),
-                          );
-                        }).toList(),
-                        onChanged: (int? newValue) {
-                          setState(() {
-                            _selectedCategory = newValue!;
-                            _selectedSubcategory = null;
-                            _loadSubcategories(newValue);
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Please select a category.';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _selectedCategory = value;
-                        },
-                      ),
-                      DropdownButtonFormField<int>(
-                        value: _selectedSubcategory,
-                        decoration: InputDecoration(labelText: 'Subcategory'),
-                        items: _subcategories.map((subcategory) {
-                          return DropdownMenuItem<int>(
-                            value: subcategory['subCategoryId'],
-                            child: Text(subcategory['subCategoryName']),
-                          );
-                        }).toList(),
-                        onChanged: (int? newValue) {
-                          setState(() {
-                            _selectedSubcategory = newValue!;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Please select a subcategory.';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _selectedSubcategory = value;
-                        },
-                      ),
-                      TextFormField(
-                        controller: _amountController,
-                        focusNode: _amountFocusNode,
+                      InputDecorator(
                         decoration: InputDecoration(
-                          labelText: 'Amount',
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 3.0),
+                          labelText: 'Transaction Detail',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5.0)),
                         ),
-                        keyboardType: TextInputType.number,
-                        // initialValue: _amount.toString(),
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return 'Please enter an amount.';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _amount = double.parse(value!);
-                        },
+                        child: TextFormField(
+                          controller: _descriptionController,
+                          // decoration:
+                          //     InputDecoration(labelText: 'Transaction Detail'),
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return 'Please enter the detail.';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _name = value!;
+                          },
+                        ),
                       ),
-                      TextFormField(
-                        controller: _dateController,
-                        decoration: InputDecoration(labelText: 'Date'),
-                        readOnly: true,
-                        onTap: () => _selectDate(context),
-                        validator: (value) {
-                          if (value!.isEmpty) {
-                            return 'Select date.';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _date = value!;
-                        },
+                      SizedBox(height: 10),
+                      InputDecorator(
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 0),
+                          labelText: 'Category',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5.0)),
+                        ),
+                        child: DropdownButtonFormField<int>(
+                          value: _selectedCategory,
+                          decoration: InputDecoration(labelText: 'select'),
+                          items: _categories.map((category) {
+                            return DropdownMenuItem<int>(
+                              value: category['categoryId'],
+                              child: Text(category['categoryName']),
+                            );
+                          }).toList(),
+                          onChanged: (int? newValue) {
+                            setState(() {
+                              _selectedCategory = newValue!;
+                              _selectedSubcategory = null;
+                              _loadSubcategories(newValue);
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Please select a category.';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _selectedCategory = value;
+                          },
+                        ),
                       ),
-                      DropdownButtonFormField<String>(
-                        value: _paymentMethod,
-                        decoration:
-                            InputDecoration(labelText: 'Payment Method'),
-                        items: ['Bank', 'Cash', 'Card', 'UPI']
-                            .map((String method) {
-                          return DropdownMenuItem<String>(
-                            value: method,
-                            child: Text(method),
-                          );
-                        }).toList(),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _paymentMethod = newValue!;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please select a payment method.';
-                          }
-                          return null;
-                        },
-                        onSaved: (value) {
-                          _paymentMethod = value!;
-                        },
+                      SizedBox(height: 10),
+                      InputDecorator(
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 0),
+                          labelText: 'Sub Category',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5.0)),
+                        ),
+                        child: DropdownButtonFormField<int>(
+                          value: _selectedSubcategory,
+                          decoration: InputDecoration(labelText: 'select'),
+                          items: _subcategories.map((subcategory) {
+                            return DropdownMenuItem<int>(
+                              value: subcategory['subCategoryId'],
+                              child: Text(subcategory['subCategoryName']),
+                            );
+                          }).toList(),
+                          onChanged: (int? newValue) {
+                            setState(() {
+                              _selectedSubcategory = newValue!;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Please select a subcategory.';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _selectedSubcategory = value;
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      InputDecorator(
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 3),
+                          labelText: 'Amount',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5.0)),
+                        ),
+                        child: TextFormField(
+                          controller: _amountController,
+                          focusNode: _amountFocusNode,
+                          // decoration: InputDecoration(
+                          //   labelText: 'Amount',
+                          // ),
+                          keyboardType: TextInputType.number,
+                          // initialValue: _amount.toString(),
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return 'Please enter an amount.';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _amount = double.parse(value!);
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      InputDecorator(
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 3),
+                          labelText: 'Date',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5.0)),
+                        ),
+                        child: TextFormField(
+                          controller: _dateController,
+                          // decoration: InputDecoration(labelText: 'select'),
+                          readOnly: true,
+                          onTap: () => _selectDate(context),
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return 'Select date.';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _date = value!;
+                          },
+                        ),
+                      ),
+                      SizedBox(height: 10),
+                      InputDecorator(
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 0),
+                          labelText: 'Payment Method',
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(5.0)),
+                        ),
+                        child: DropdownButtonFormField<String>(
+                          value: _paymentMethod,
+                          // decoration:
+                          //     InputDecoration(labelText: 'Payment Method'),
+                          items: ['Bank', 'Cash', 'Card', 'UPI']
+                              .map((String method) {
+                            return DropdownMenuItem<String>(
+                              value: method,
+                              child: Text(method),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _paymentMethod = newValue!;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please select a payment method.';
+                            }
+                            return null;
+                          },
+                          onSaved: (value) {
+                            _paymentMethod = value!;
+                          },
+                        ),
                       ),
                       SizedBox(height: 20),
                       ElevatedButton(
