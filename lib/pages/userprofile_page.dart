@@ -4,11 +4,8 @@ import 'package:expenses_tracker/databases/database_helper.dart';
 import 'package:expenses_tracker/pages/home_page.dart';
 import 'package:expenses_tracker/pages/settings_page.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-// import 'package:flutter/services.dart'; // Add this import statement
-// import 'package:device_info/device_info.dart';
 
 class UserProfilePage extends StatefulWidget {
   @override

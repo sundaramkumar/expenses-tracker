@@ -127,7 +127,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Confirm Delete? '),
-          content: Text('Are you sure you want to delete this category?'),
+          content: Text(
+              'Are you sure you want to delete this category? This will delete all related transactions & subcategories and cannot be undone'),
           actions: <Widget>[
             TextButton(
               child: Text('Cancel'),

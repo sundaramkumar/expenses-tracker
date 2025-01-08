@@ -1,10 +1,3 @@
-// import 'package:isar/isar.dart';
-
-// to generate the isar file
-// run in terminal: dart run build_runner build
-// part 'expense.g.dart';
-
-// @Collection()
 class Expense {
   final int? id;
   final String name;

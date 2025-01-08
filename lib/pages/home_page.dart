@@ -50,24 +50,6 @@ class _HomePageState extends State<HomePage> {
       //   foregroundColor: Colors.white,
       // ),
       body: widget.body,
-      // bottomNavigationBar: CurvedNavigationBar(
-      //   color: Colors.white,
-      //   backgroundColor: Colors.grey[200]!,
-      //   animationDuration: Duration(milliseconds: 300),
-      //   // buttonBackgroundColor: Colors.red,
-      //   height: 50,
-      //   items: <Widget>[
-      //     Icon(
-      //       Icons.home,
-      //       size: 30,
-      //     ),
-      //     Icon(Icons.view_kanban, size: 30),
-      //     Icon(Icons.add_circle, size: 30),
-      //     Icon(Icons.list_alt, size: 30),
-      //     Icon(Icons.settings, size: 30),
-      //   ],
-      //   onTap: _onItemTapped,
-      // )
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
