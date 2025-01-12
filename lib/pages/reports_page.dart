@@ -32,8 +32,8 @@ class _ReportsPageState extends State<ReportsPage> {
 
   Future<void> _fetchTransactions() async {
     if (_fromDate != null && _toDate != null) {
-      final transactions =
-          await _dbHelper.getExpensesByDateRange(_fromDate!, _toDate!);
+      final transactions = await _dbHelper.getExpensesByDateRange(
+          _fromDate!.subtract(Duration(days: 1)), _toDate!);
       setState(() {
         _transactions = transactions.where((transaction) {
           if (_filterOption == 'Both') return true;
