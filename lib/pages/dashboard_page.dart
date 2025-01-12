@@ -25,8 +25,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> _fetchTransactions() async {
     final transactions = await _dbHelper.getExpensesByDateRange(
-      DateTime(_selectedMonth.year, _selectedMonth.month, 1),
-      DateTime(_selectedMonth.year, _selectedMonth.month + 1, 0),
+      DateTime(_selectedMonth.year, _selectedMonth.month, 1)
+          .subtract(Duration(days: 1)),
+      DateTime(_selectedMonth.year, _selectedMonth.month + 1, 1)
+          .subtract(Duration(days: 1)),
     );
     double totalIncome = 0.0;
     double totalExpenses = 0.0;
