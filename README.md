@@ -1,6 +1,6 @@
-# expenses_tracker
+# Expenses Tracker
 
-A Expenses Tracker app Flutter App for iOS and Android.
+An Expenses Tracker app Flutter App for iOS and Android.
 
 ## Description
 
