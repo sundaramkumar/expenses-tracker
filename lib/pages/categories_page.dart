@@ -1,7 +1,9 @@
 import 'package:expenses_tracker/databases/database_helper.dart';
+import 'package:expenses_tracker/styles/app_styles.dart';
 import 'package:expenses_tracker/utils/string_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../databases/category.dart';
 import 'dialog_box.dart';
 
@@ -34,12 +36,18 @@ class _CategoriesPageState extends State<CategoriesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Categories'),
+        title: Text(
+          'Categories',
+          style: Styles.categoryHeading,
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addNewCategory,
-        backgroundColor: Colors.redAccent,
-        child: Icon(Icons.add),
+        backgroundColor: Styles.btnBackgroundColor,
+        child: Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
       body: Container(
@@ -114,9 +122,16 @@ class _CategoriesPageState extends State<CategoriesPage> {
     return Row(
       children: [
         SizedBox(width: 10),
-        Icon(Icons.category, size: 15),
+        Icon(
+          Icons.category,
+          size: 15,
+          color: Styles.categoryIcon,
+        ),
         SizedBox(width: 10),
-        Text(category.categoryName)
+        Text(
+          category.categoryName,
+          style: Styles.categoryName,
+        )
       ],
     );
   }
@@ -131,12 +146,14 @@ class _CategoriesPageState extends State<CategoriesPage> {
               'Are you sure you want to delete this category? This will delete all related transactions & subcategories and cannot be undone'),
           actions: <Widget>[
             TextButton(
+              style: Styles.cancelButtonStyle,
               child: Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
             ),
             TextButton(
+              style: Styles.deleteButtonStyle,
               child: Text('Delete'),
               onPressed: () {
                 _deleteCategory(context, category.categoryId);

@@ -1,9 +1,13 @@
+import 'package:expenses_tracker/pages/signup_page.dart';
+import 'package:expenses_tracker/styles/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/pages/dashboard_page.dart';
 import 'package:expenses_tracker/pages/reports_page.dart';
 import 'package:expenses_tracker/pages/expense_page.dart';
 import 'package:expenses_tracker/pages/transactions_page.dart';
 import 'package:expenses_tracker/pages/settings_page.dart';
+
+import 'package:expenses_tracker/pages/login_page.dart';
 
 class HomePage extends StatefulWidget {
   final Widget body;
@@ -19,11 +23,13 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
   final List<Widget> _children = [
+    // LoginPage(),
     DashboardPage(), //0
     ReportsPage(), //1
     ExpensePage(), //2
     TransactionsPage(), //3
     SettingsPage(), //4
+    SignUpPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -74,11 +80,11 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
         currentIndex: widget.currentIndex,
-        selectedItemColor: Colors.white,
+        selectedItemColor: Colors.amber[800],
         showUnselectedLabels: true, // show all the labels
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.red,
-        unselectedItemColor: Colors.amber[800],
+        backgroundColor: Styles.bottomNavBgColor,
+        unselectedItemColor: Colors.white,
         onTap: _onItemTapped,
       ),
     );

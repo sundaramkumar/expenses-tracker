@@ -1,3 +1,4 @@
+import 'package:expenses_tracker/styles/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -99,7 +100,7 @@ class _ReportsPageState extends State<ReportsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Reports'),
-        backgroundColor: Colors.red,
+        backgroundColor: Styles.appBgColor,
         toolbarHeight: 45,
         foregroundColor: Colors.white,
       ),

@@ -1,7 +1,9 @@
 import 'package:expenses_tracker/databases/database_helper.dart';
 import 'package:expenses_tracker/pages/dialog_box.dart';
+import 'package:expenses_tracker/styles/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../databases/subcategory.dart';
 import "../utils/string_extension.dart";
 
@@ -34,12 +36,12 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Subcategories'),
+        title: Text('Subcategories', style: Styles.categoryHeading),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addNewSubCategory,
-        backgroundColor: Colors.redAccent,
-        child: Icon(Icons.add),
+        backgroundColor: Styles.btnBackgroundColor,
+        child: Icon(Icons.add, color: Colors.white),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
       body: Container(
@@ -115,9 +117,9 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
     return Row(
       children: [
         SizedBox(width: 10),
-        Icon(Icons.category, size: 15),
+        Icon(Icons.category, size: 15, color: Styles.subCategoryIcon),
         SizedBox(width: 10),
-        Text(subCategory.subCategoryName)
+        Text(subCategory.subCategoryName, style: Styles.subCategoryName)
       ],
     );
   }

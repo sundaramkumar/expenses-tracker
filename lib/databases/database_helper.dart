@@ -1,3 +1,4 @@
+import 'package:expenses_tracker/models/user.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'category.dart';
@@ -31,6 +32,13 @@ class DatabaseHelper {
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    await db.execute('''
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY,
+        username TEXT,
+        password TEXT
+      )
+    ''');
     await db.execute('''
       CREATE TABLE "transactions" (
         "id"	INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -372,6 +380,28 @@ class DatabaseHelper {
     ''');
   }
 
+  Future<int> signUp(User user) async {
+    Database db = await database;
+    return await db.insert('users', user.toMap());
+  }
+
+  Future<User?> loginUser(String username, String password) async {
+    Database db = await database;
+
+    List<Map> results = await db.query(
+      'users',
+      columns: ['id', 'username', 'password'],
+      where: 'username = ? AND password = ?',
+      whereArgs: [username, password],
+    );
+
+    if (results.length > 0) {
+      return User.fromMap(Map<String, dynamic>.from(results.first));
+    } else {
+      return null;
+    }
+  }
+
   Future<int> insertExpense(Map<String, dynamic> expense) async {
     Database db = await database;
     return await db.insert('transactions', expense);
@@ -609,5 +639,10 @@ class DatabaseHelper {
       FROM
         profile
     ''');
+  }
+
+  Future<void> close() async {
+    Database db = await database;
+    await db.close();
   }
 }

@@ -1,5 +1,6 @@
 import 'package:expenses_tracker/pages/home_page.dart';
 import 'package:expenses_tracker/pages/transactions_page.dart';
+import 'package:expenses_tracker/styles/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../databases/database_helper.dart';
@@ -184,7 +185,7 @@ class _ExpensePageState extends State<ExpensePage> {
         title: Text(
             widget.expense != null ? 'Edit Transaction' : 'Add Transaction'),
         // backgroundColor: Colors.grey[200],
-        backgroundColor: Colors.red,
+        backgroundColor: Styles.appBgColor,
         toolbarHeight: 45,
         foregroundColor: Colors.white,
       ),

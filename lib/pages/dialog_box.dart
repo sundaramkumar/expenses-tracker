@@ -1,4 +1,6 @@
+import 'package:expenses_tracker/styles/app_styles.dart';
 import "package:flutter/material.dart";
+import 'package:google_fonts/google_fonts.dart';
 import '../databases/database_helper.dart';
 
 class DialogBox extends StatelessWidget {
@@ -33,7 +35,7 @@ class DialogBox extends StatelessWidget {
           children: [
             Text(
               dialogTitle ?? "Add New Category",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              style: Styles.dialogHeading,
               textAlign: TextAlign.center,
             ),
             _buildBody(context),
@@ -105,34 +107,28 @@ class DialogBox extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        //save button
+        //canel button
         ElevatedButton(
           onPressed: onCancel,
           style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red.shade300,
+              backgroundColor: Styles.dialogCancelButtonBgColor,
               foregroundColor: Colors.white,
               // padding:
               //     EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.normal,
-                  color: Colors.white)),
+              textStyle: Styles.dialogButton),
           child: Text('Cancel'),
         ),
         //space
         const SizedBox(width: 10),
-        //cancel button
+        //save button
         ElevatedButton(
           onPressed: onSave,
           style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green.shade500,
+              backgroundColor: Styles.dialogSaveButtonBgColor,
               foregroundColor: Colors.white,
               // padding:
               //     EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              textStyle: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.normal,
-                  color: Colors.white)),
+              textStyle: Styles.dialogButton),
           child: Text('Save'),
         )
       ],

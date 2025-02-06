@@ -1,3 +1,4 @@
+import 'package:expenses_tracker/styles/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../databases/database_helper.dart';
@@ -59,7 +60,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Dashboard'),
-        backgroundColor: Colors.red,
+        backgroundColor: Styles.appBgColor,
         toolbarHeight: 45,
         foregroundColor: Colors.white,
       ),
@@ -88,6 +89,7 @@ class _DashboardPageState extends State<DashboardPage> {
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2.0),
               child: ChoiceChip(
+                // backgroundColor: Styles.chipBodyColor,
                 label: Text(DateFormat.MMMM().format(month)),
                 selected: _selectedMonth.month == month.month,
                 side: BorderSide(

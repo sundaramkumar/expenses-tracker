@@ -1,5 +1,6 @@
 import 'package:expenses_tracker/pages/expense_page.dart';
 import 'package:expenses_tracker/pages/home_page.dart';
+import 'package:expenses_tracker/styles/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
@@ -71,7 +72,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   @override
   Widget build(BuildContext context) {
     return LiquidPullToRefresh(
-      color: Colors.red,
+      color: Colors.amber[300],
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       springAnimationDurationInMilliseconds: 700,
       height: 200,
@@ -79,7 +80,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
       child: Scaffold(
         appBar: AppBar(
           title: Text('Transactions'),
-          backgroundColor: Colors.red,
+          backgroundColor: Styles.appBgColor,
           toolbarHeight: 45,
           foregroundColor: Colors.white,
         ),

@@ -1,4 +1,5 @@
 import 'package:expenses_tracker/pages/dashboard_page.dart';
+import 'package:expenses_tracker/pages/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:expenses_tracker/pages/home_page.dart';
 import 'package:expenses_tracker/pages/transactions_page.dart';
@@ -16,10 +17,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomePage(
-        body: DashboardPage(),
-        currentIndex: 0,
-      ),
+      home: SplashScreen(),
+      // home: HomePage(
+      //   body: SplashScreen(),
+      //   currentIndex: 0,
+      // ),
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:expenses_tracker/pages/categories_page.dart';
 import 'package:expenses_tracker/pages/subcategories_page.dart';
 import 'package:expenses_tracker/pages/userprofile_page.dart';
-import 'package:expenses_tracker/styles/app_styles.dart';
 import 'package:flutter/material.dart';
 import 'package:text_scroll/text_scroll.dart';
 // import '../databases/database_helper.dart';
@@ -16,11 +15,12 @@ class SettingsPage extends StatelessWidget {
     final mediaQuery = MediaQuery.of(context);
     final availableHeight =
         mediaQuery.size.height - mediaQuery.padding.top - kToolbarHeight;
+    print(availableHeight);
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
         title: Text('Settings'),
-        backgroundColor: Styles.appBgColor,
+        backgroundColor: Colors.red,
         toolbarHeight: 45,
         foregroundColor: Colors.white,
       ),
@@ -39,11 +39,7 @@ class SettingsPage extends StatelessWidget {
                     child: Column(
                       children: [
                         SizedBox(height: 20),
-                        Icon(
-                          Icons.person,
-                          size: 50,
-                          color: Colors.amber[800],
-                        ),
+                        Icon(Icons.person, size: 50),
                         ListTile(
                           title:
                               Text('User Profile', textAlign: TextAlign.center),
@@ -69,11 +65,7 @@ class SettingsPage extends StatelessWidget {
                     child: Column(
                       children: [
                         SizedBox(height: 15),
-                        Icon(
-                          Icons.category,
-                          size: 50,
-                          color: Colors.amber[800],
-                        ),
+                        Icon(Icons.category, size: 50),
                         ListTile(
                           title:
                               Text('Categories', textAlign: TextAlign.center),
@@ -99,11 +91,7 @@ class SettingsPage extends StatelessWidget {
                     child: Column(
                       children: [
                         SizedBox(height: 20),
-                        Icon(
-                          Icons.subdirectory_arrow_right,
-                          size: 50,
-                          color: Colors.amber[800],
-                        ),
+                        Icon(Icons.subdirectory_arrow_right, size: 50),
                         ListTile(
                           title: Text('Subcategories',
                               textAlign: TextAlign.center),
@@ -136,6 +124,18 @@ class SettingsPage extends StatelessWidget {
                           fit: BoxFit.cover,
                         ),
                       ),
+                    ),
+                    TextScroll(
+                      textAlign: TextAlign.end,
+                      'Daily Expenses Tracker developed By Kumar Sundaram. Copyright © 2025. All rights reserved.',
+                      velocity: const Velocity(pixelsPerSecond: Offset(25, 0)),
+                      delayBefore: const Duration(milliseconds: 500),
+                      // numberOfReps: 5,
+                      pauseBetween: const Duration(milliseconds: 50),
+                      style: const TextStyle(color: Colors.black, fontSize: 10),
+                      selectable: true,
+                      // mode: TextScrollMode.bouncing,
+                      // overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
