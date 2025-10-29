@@ -24,13 +24,9 @@ class SmsService {
       final body = data['body'] as String;
       final timestamp = data['timestamp'] as int;
 
-      print('SMS received from: $sender');
-      print('Body: $body');
-
       // Parse the SMS
       final transaction = SmsParser.parse(body, timestamp);
       if (transaction != null) {
-        print('Transaction detected: ${transaction.toMap()}');
         
         // Show notification instead of dialog
         await NotificationService().showTransactionNotification(transaction);
@@ -48,7 +44,6 @@ class SmsService {
       final result = await platform.invokeMethod('checkPermission');
       return result as bool;
     } catch (e) {
-      print('Error checking SMS permission: $e');
       return false;
     }
   }
@@ -57,7 +52,7 @@ class SmsService {
     try {
       await platform.invokeMethod('requestPermission');
     } catch (e) {
-      print('Error requesting SMS permission: $e');
+      // Permission request failed
     }
   }
 
@@ -79,7 +74,6 @@ class SmsService {
       
       return transactions;
     } catch (e) {
-      print('Error scanning historical SMS: $e');
       return [];
     }
   }
