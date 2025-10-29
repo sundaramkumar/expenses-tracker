@@ -79,7 +79,6 @@ class _MyAppState extends State<MyApp> {
 
   void _handleDiscard(TransactionData transaction) {
     // Just dismiss - notification already cancelled
-    print('Transaction discarded: ${transaction.amount}');
   }
 
   void _handleTransactionDetected(TransactionData transaction) {
