@@ -36,6 +36,16 @@
             </intent-filter>
         </receiver>
 
+        <!-- Notification Action Receiver -->
+        <receiver
+            android:name=".NotificationActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="ACTION_CONFIRM" />
+                <action android:name="ACTION_DISCARD" />
+            </intent-filter>
+        </receiver>
+
         <activity
             android:name=".AddTransactionConfigActivity"
             android:exported="false"
