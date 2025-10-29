@@ -6,9 +6,9 @@ import 'notification_service.dart';
 class SmsService {
   static const platform = MethodChannel('app.channel/sms');
   static final SmsService _instance = SmsService._internal();
-  
+
   factory SmsService() => _instance;
-  
+
   SmsService._internal();
 
   Function(TransactionData)? onTransactionDetected;
@@ -27,10 +27,9 @@ class SmsService {
       // Parse the SMS
       final transaction = SmsParser.parse(body, timestamp);
       if (transaction != null) {
-        
         // Show notification instead of dialog
         await NotificationService().showTransactionNotification(transaction);
-        
+
         // Also notify listeners if app is open
         if (onTransactionDetected != null) {
           onTransactionDetected!(transaction);
@@ -60,31 +59,33 @@ class SmsService {
     try {
       final result = await platform.invokeMethod('readSms', {'limit': limit});
       final messages = List<Map<dynamic, dynamic>>.from(result);
-      
+
       final transactions = <TransactionData>[];
       for (final msg in messages) {
         final body = msg['body'] as String;
         final timestamp = msg['timestamp'] as int;
-        
+
         final transaction = SmsParser.parse(body, timestamp);
         if (transaction != null) {
           transactions.add(transaction);
         }
       }
-      
+
       return transactions;
     } catch (e) {
       return [];
     }
   }
 
-  Future<void> saveTransaction(TransactionData transaction, int categoryId, int subcategoryId) async {
+  Future<void> saveTransaction(
+      TransactionData transaction, int categoryId, int subcategoryId) async {
     final dbHelper = DatabaseHelper();
-    
+
     final data = {
       'userId': 1,
       'transactionDate': transaction.date.toIso8601String().split('T')[0],
-      'description': transaction.merchant ?? (transaction.type == 'Income' ? 'Income' : 'Expense'),
+      'description': transaction.merchant ??
+          (transaction.type == 'Income' ? 'Income' : 'Expense'),
       'debit': transaction.type == 'Expense' ? transaction.amount : 0.0,
       'credit': transaction.type == 'Income' ? transaction.amount : 0.0,
       'transactionType': 'UPI',
