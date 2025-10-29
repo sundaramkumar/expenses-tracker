@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../utils/sms_parser.dart';
 import 'dart:convert';
 
@@ -34,15 +35,21 @@ class NotificationService {
 
   @pragma('vm:entry-point')
   static void _handleBackgroundNotificationResponse(NotificationResponse response) {
-    // Handle background notification action
-    _handleAction(response);
+    // Use platform channel to save directly in native code for background
+    if (response.payload == null) return;
+    
+    const platform = MethodChannel('app.channel/notification');
+    try {
+      platform.invokeMethod('handleNotificationAction', {
+        'actionId': response.actionId,
+        'payload': response.payload,
+      });
+    } catch (e) {
+      // Error handling native notification action
+    }
   }
 
   void _handleNotificationResponse(NotificationResponse response) {
-    _handleAction(response);
-  }
-
-  static void _handleAction(NotificationResponse response) {
     if (response.payload == null) return;
 
     try {
@@ -56,31 +63,29 @@ class NotificationService {
         referenceNumber: data['referenceNumber'],
         rawMessage: data['rawMessage'],
       );
-
-      final instance = NotificationService();
       
       switch (response.actionId) {
         case 'confirm':
-          instance.onConfirm?.call(transaction);
+          onConfirm?.call(transaction);
           break;
         case 'edit':
-          instance.onEdit?.call(transaction);
+          onEdit?.call(transaction);
           break;
         case 'discard':
-          instance.onDiscard?.call(transaction);
+          onDiscard?.call(transaction);
           break;
       }
     } catch (e) {
-      print('Error handling notification action: $e');
+      // Error handling notification action
     }
   }
 
   Future<void> showTransactionNotification(TransactionData transaction) async {
-    final payload = jsonEncode({
+    final transactionJson = jsonEncode({
       'amount': transaction.amount,
       'type': transaction.type,
-      'merchant': transaction.merchant,
-      'date': transaction.date.toIso8601String(),
+      'merchant': transaction.merchant ?? transaction.type,
+      'date': transaction.date.toIso8601String().split('T')[0],
       'accountNumber': transaction.accountNumber,
       'referenceNumber': transaction.referenceNumber,
       'rawMessage': transaction.rawMessage,
@@ -110,21 +115,21 @@ class NotificationService {
           'confirm',
           '✓ Confirm',
           icon: DrawableResourceAndroidBitmap('@drawable/ic_check'),
-          showsUserInterface: false,  // Don't open app
-          cancelNotification: true,    // Auto-dismiss after action
+          showsUserInterface: false,
+          cancelNotification: true,
         ),
         const AndroidNotificationAction(
           'edit',
           '✎ Edit',
           icon: DrawableResourceAndroidBitmap('@drawable/ic_edit'),
-          showsUserInterface: true,    // Open app for editing
+          showsUserInterface: true,
         ),
         const AndroidNotificationAction(
           'discard',
           '✕ Discard',
           icon: DrawableResourceAndroidBitmap('@drawable/ic_close'),
-          showsUserInterface: false,   // Don't open app
-          cancelNotification: true,    // Auto-dismiss
+          showsUserInterface: false,
+          cancelNotification: true,
         ),
       ],
     );
@@ -134,7 +139,7 @@ class NotificationService {
       _buildNotificationTitle(transaction),
       _buildNotificationBody(transaction),
       NotificationDetails(android: androidDetails),
-      payload: payload,
+      payload: transactionJson,
     );
   }
 
