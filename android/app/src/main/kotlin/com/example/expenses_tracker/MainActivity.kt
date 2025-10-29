@@ -13,6 +13,7 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity: FlutterActivity() {
     private val INTENT_CHANNEL = "app.channel/intent"
     private val SMS_CHANNEL = "app.channel/sms"
+    private val NOTIFICATION_CHANNEL = "app.channel/notification"
     private val SMS_PERMISSION_REQUEST = 100
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
@@ -37,6 +38,19 @@ class MainActivity: FlutterActivity() {
         // SMS channel
         val smsChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SMS_CHANNEL)
         SmsReceiver.methodChannel = smsChannel
+        
+        // Notification action channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, NOTIFICATION_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "handleNotificationAction" -> {
+                    val actionId = call.argument<String>("actionId")
+                    val payload = call.argument<String>("payload")
+                    handleNotificationAction(actionId, payload)
+                    result.success(null)
+                }
+                else -> result.notImplemented()
+            }
+        }
         
         smsChannel.setMethodCallHandler { call, result ->
             when (call.method) {
@@ -118,5 +132,25 @@ class MainActivity: FlutterActivity() {
         }
         
         return messages
+    }
+    
+    private fun handleNotificationAction(actionId: String?, payload: String?) {
+        if (actionId == null || payload == null) return
+        
+        when (actionId) {
+            "confirm" -> {
+                // Parse and save transaction
+                try {
+                    val receiver = NotificationActionReceiver()
+                    receiver.handleConfirm(this, payload)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            "discard" -> {
+                // Just log
+                android.util.Log.d("MainActivity", "Transaction discarded")
+            }
+        }
     }
 }
