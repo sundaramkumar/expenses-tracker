@@ -97,6 +97,7 @@ class NotificationService {
       channelDescription: 'Notifications for detected bank transactions',
       importance: Importance.high,
       priority: Priority.high,
+      sound: const RawResourceAndroidNotificationSound('notification_sound'),
       styleInformation: BigTextStyleInformation(
         _buildNotificationBody(transaction),
         htmlFormatBigText: true,

@@ -5,6 +5,8 @@ import '../databases/database_helper.dart';
 import '../utils/widgets/app_bars.dart';
 import '../utils/widgets/primary_button.dart';
 import '../utils/intent_bridge.dart';
+import '../services/sms_service.dart';
+import '../utils/sms_parser.dart';
 
 class ExpensePage extends StatefulWidget {
   final Map<String, dynamic>? expense;
@@ -33,6 +35,9 @@ class _ExpensePageState extends State<ExpensePage> {
   bool _isLoadingCategories = true;
   bool _isLoadingSubcategories = false;
   String? _loadError;
+  
+  List<TransactionData> _recentSmsTransactions = [];
+  bool _isLoadingSms = false;
 
   TextEditingController _dateController = TextEditingController();
   TextEditingController _amountController = TextEditingController();
@@ -45,6 +50,7 @@ class _ExpensePageState extends State<ExpensePage> {
   void initState() {
     super.initState();
     _loadCategories();
+    _loadRecentSms();
     if (widget.expense != null) {
       _date = DateFormat('yyyy-MM-dd')
           .format(DateTime.parse(widget.expense!['transactionDate']));
@@ -235,6 +241,76 @@ class _ExpensePageState extends State<ExpensePage> {
       });
     }
   }
+  
+  Future<void> _loadRecentSms() async {
+    if (widget.expense != null) return; // Don't load for edit mode
+    
+    setState(() {
+      _isLoadingSms = true;
+    });
+    
+    try {
+      final smsService = SmsService();
+      final hasPermission = await smsService.checkPermission();
+      
+      if (!hasPermission) {
+        setState(() {
+          _isLoadingSms = false;
+        });
+        return;
+      }
+      
+      final transactions = await smsService.scanHistoricalSms(limit: 4);
+      
+      if (mounted) {
+        setState(() {
+          _recentSmsTransactions = transactions;
+          _isLoadingSms = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingSms = false;
+        });
+      }
+    }
+  }
+  
+  void _fillFromSms(TransactionData transaction) async {
+    // Set basic fields
+    setState(() {
+      _transactionType = transaction.type;
+      _amount = transaction.amount;
+      _amountController.text = transaction.amount.toStringAsFixed(2);
+      _descriptionController.text = transaction.merchant ?? transaction.type;
+      _date = DateFormat('yyyy-MM-dd').format(transaction.date);
+      _dateController.text = _date;
+      _paymentMethod = 'UPI';
+    });
+    
+    // Auto-select category
+    final suggestedCategory = SmsParser.getCategoryFromMerchant(transaction.merchant);
+    final matchedCategory = _categories.firstWhere(
+      (c) => c['categoryName'] == suggestedCategory,
+      orElse: () => _categories.isNotEmpty ? _categories.first : {},
+    );
+    
+    if (matchedCategory.isNotEmpty) {
+      setState(() {
+        _selectedCategory = matchedCategory['categoryId'];
+      });
+      _loadSubcategories(_selectedCategory!);
+      
+      // Wait a bit for subcategories to load, then select first
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (_subcategories.isNotEmpty && mounted) {
+        setState(() {
+          _selectedSubcategory = _subcategories.first['subCategoryId'];
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -391,6 +467,73 @@ class _ExpensePageState extends State<ExpensePage> {
                           text: widget.expense != null ? 'Save Transaction' : 'Add Transaction',
                           icon: Icons.check,
                         ),
+                        
+                        // SMS Suggestions Section
+                        if (widget.expense == null && (_isLoadingSms || _recentSmsTransactions.isNotEmpty)) ...[
+                          const SizedBox(height: 24),
+                          const Divider(),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(Icons.sms, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Recent SMS Transactions',
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          if (_isLoadingSms)
+                            const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            )
+                          else if (_recentSmsTransactions.isEmpty)
+                            Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Text(
+                                'No recent bank transactions found in SMS',
+                                style: Theme.of(context).textTheme.bodySmall,
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          else
+                            ..._recentSmsTransactions.map((tx) => Card(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              child: ListTile(
+                                dense: true,
+                                leading: CircleAvatar(
+                                  backgroundColor: tx.type == 'Income'
+                                      ? Colors.green.withOpacity(0.2)
+                                      : Colors.red.withOpacity(0.2),
+                                  child: Icon(
+                                    tx.type == 'Income' ? Icons.arrow_downward : Icons.arrow_upward,
+                                    color: tx.type == 'Income' ? Colors.green : Colors.red,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: Text(
+                                  '₹${tx.amount.toStringAsFixed(2)}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                subtitle: Text(
+                                  tx.merchant ?? tx.type,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                trailing: TextButton(
+                                  onPressed: () => _fillFromSms(tx),
+                                  child: const Text('Use'),
+                                ),
+                              ),
+                            )).toList(),
+                        ],
                       ],
                     ),
                   ),
