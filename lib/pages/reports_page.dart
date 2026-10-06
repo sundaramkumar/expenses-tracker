@@ -12,49 +12,51 @@ class ReportsPage extends StatefulWidget {
 }
 
 class _ReportsPageState extends State<ReportsPage> {
-  DateTime? _fromDate;
-  DateTime? _toDate;
-  String _filterOption = 'Both';
+  late DateTime _fromDate;
+  late DateTime _toDate;
+  String _filterOption = 'Expenses';
   List<Map<String, dynamic>> _transactions = [];
   final DatabaseHelper _dbHelper = DatabaseHelper();
   final NumberFormat _currencyFormat =
       NumberFormat.currency(symbol: '', decimalDigits: 2);
-  List<FlSpot> expenseSpots = [];
   List<FlSpot> _expenseSpots = [];
   List<String> dateLabels = [];
-  int index = 0;
-  Map<String, double> dailyExpenses = {};
+  Map<String, double> categoryExpenses = {};
   double maxExpense = 0.0;
-  double interval = 1.0;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    // Default to current month
+    final now = DateTime.now();
+    _fromDate = DateTime(now.year, now.month, 1);
+    _toDate = DateTime(now.year, now.month + 1, 0);
     _fetchTransactions();
   }
 
   Future<void> _fetchTransactions() async {
-    if (_fromDate != null && _toDate != null) {
-      final transactions = await _dbHelper.getExpensesByDateRange(
-          _fromDate!.subtract(Duration(days: 1)), _toDate!);
-      setState(() {
-        _transactions = transactions.where((transaction) {
-          if (_filterOption == 'Both') return true;
-          if (_filterOption == 'Income') return transaction['credit'] > 0;
-          if (_filterOption == 'Expenses') return transaction['debit'] > 0;
-          return false;
-        }).toList();
-      });
-    }
+    setState(() {
+      _isLoading = true;
+    });
 
-    // reset variables
-    dailyExpenses = {};
-    expenseSpots = [];
-    _expenseSpots = [];
-    dateLabels = [];
+    final transactions = await _dbHelper.getExpensesByDateRange(
+        _fromDate.subtract(const Duration(days: 1)), _toDate);
+    
+    final filteredTransactions = transactions.where((transaction) {
+      if (_filterOption == 'Both') return true;
+      if (_filterOption == 'Income') return transaction['credit'] > 0;
+      if (_filterOption == 'Expenses') return transaction['debit'] > 0;
+      return false;
+    }).toList();
 
-    // Calculate daily expenses
-    _transactions.where((txn) => txn['debit'] > 0).forEach((txn) {
+    // Calculate daily expenses for line chart
+    final Map<String, double> dailyExpenses = {};
+    final List<FlSpot> expenseSpots = [];
+    final List<String> labels = [];
+    int index = 0;
+
+    filteredTransactions.where((txn) => txn['debit'] > 0).forEach((txn) {
       String dateKey = txn['transactionDate'];
       dailyExpenses.update(dateKey, (value) => value + txn['debit'].toDouble(),
           ifAbsent: () => txn['debit'].toDouble());
@@ -62,20 +64,29 @@ class _ReportsPageState extends State<ReportsPage> {
 
     dailyExpenses.forEach((date, amount) {
       expenseSpots.add(FlSpot(index.toDouble(), amount));
-      dateLabels.add(date);
+      labels.add(date);
       index++;
     });
 
-    setState(() {
-      _expenseSpots = expenseSpots;
-    });
+    // Calculate category-wise expenses
+    final Map<String, double> catExpenses = {};
+    for (var txn in filteredTransactions.where((t) => t['debit'] > 0)) {
+      String category = txn['categoryName'] ?? 'Other';
+      double amount = txn['debit'].toDouble();
+      catExpenses.update(category, (value) => value + amount,
+          ifAbsent: () => amount);
+    }
 
-    // Calculate max expense value for Y-axis limit
-    maxExpense = dailyExpenses.isNotEmpty
-        ? dailyExpenses.values.reduce((a, b) => a > b ? a : b)
-        : 100;
-    interval =
-        (maxExpense / 5).ceilToDouble(); // Dynamic interval for better scaling
+    setState(() {
+      _transactions = filteredTransactions;
+      _expenseSpots = expenseSpots;
+      dateLabels = labels;
+      categoryExpenses = catExpenses;
+      maxExpense = dailyExpenses.isNotEmpty
+          ? dailyExpenses.values.reduce((a, b) => a > b ? a : b)
+          : 100;
+      _isLoading = false;
+    });
   }
 
   Future<void> _selectDate(BuildContext context, bool isFromDate) async {
@@ -112,9 +123,7 @@ class _ReportsPageState extends State<ReportsPage> {
                   child: OutlinedButton.icon(
                     onPressed: () => _selectDate(context, true),
                     icon: const Icon(Icons.date_range),
-                    label: Text(_fromDate == null
-                        ? 'From date'
-                        : DateFormat('yyyy-MM-dd').format(_fromDate!)),
+                    label: Text(DateFormat('MMM dd, yyyy').format(_fromDate)),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -122,9 +131,7 @@ class _ReportsPageState extends State<ReportsPage> {
                   child: OutlinedButton.icon(
                     onPressed: () => _selectDate(context, false),
                     icon: const Icon(Icons.date_range),
-                    label: Text(_toDate == null
-                        ? 'To date'
-                        : DateFormat('yyyy-MM-dd').format(_toDate!)),
+                    label: Text(DateFormat('MMM dd, yyyy').format(_toDate)),
                   ),
                 ),
               ],
@@ -173,7 +180,6 @@ class _ReportsPageState extends State<ReportsPage> {
                         gridData: FlGridData(
                           show: true,
                           drawVerticalLine: false,
-                          horizontalInterval: interval,
                           getDrawingHorizontalLine: (value) => FlLine(
                             color: Theme.of(context)
                                 .colorScheme
