@@ -45,6 +45,7 @@ dependencies:
   fl_chart: ^0.70.0
   pie_chart: ^5.4.0
   image_picker: ^1.1.2
+  google_mlkit_text_recognition: ^0.15.0
   permission_handler: ^11.3.1
   text_scroll: ^0.2.0
   sqflite_common_ffi: ^2.3.2

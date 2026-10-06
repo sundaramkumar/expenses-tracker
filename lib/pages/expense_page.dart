@@ -1,5 +1,7 @@
 import 'package:expenses_tracker/pages/home_page.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../databases/database_helper.dart';
 import '../utils/widgets/app_bars.dart';
@@ -7,6 +9,7 @@ import '../utils/widgets/primary_button.dart';
 import '../utils/intent_bridge.dart';
 import '../services/sms_service.dart';
 import '../utils/sms_parser.dart';
+import '../utils/receipt_parser.dart';
 
 class ExpensePage extends StatefulWidget {
   final Map<String, dynamic>? expense;
@@ -38,6 +41,7 @@ class _ExpensePageState extends State<ExpensePage> {
   
   List<TransactionData> _recentSmsTransactions = [];
   bool _isLoadingSms = false;
+  bool _isScanningReceipt = false;
 
   TextEditingController _dateController = TextEditingController();
   TextEditingController _amountController = TextEditingController();
@@ -242,6 +246,106 @@ class _ExpensePageState extends State<ExpensePage> {
     }
   }
   
+  Future<void> _scanReceipt() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(children: [
+          ListTile(
+            leading: const Icon(Icons.photo_camera),
+            title: const Text('Take a photo'),
+            onTap: () => Navigator.pop(ctx, ImageSource.camera),
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('Choose from gallery'),
+            onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+          ),
+        ]),
+      ),
+    );
+    if (source == null) return;
+
+    final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    try {
+      final picked = await ImagePicker().pickImage(source: source, imageQuality: 90);
+      if (picked == null || !mounted) return;
+      setState(() => _isScanningReceipt = true);
+
+      final result = await recognizer.processImage(InputImage.fromFilePath(picked.path));
+      if (result.text.trim().isEmpty) {
+        _showSnack('No text found. Try a clearer, well-lit photo of the receipt.');
+        return;
+      }
+      await _applyReceipt(ReceiptParser.parse(result.text));
+    } catch (e) {
+      _showSnack('Could not scan the receipt. Please try again.');
+    } finally {
+      await recognizer.close();
+      if (mounted) setState(() => _isScanningReceipt = false);
+    }
+  }
+
+  Future<void> _applyReceipt(ReceiptData data) async {
+    final categories =
+        _categories.isNotEmpty ? _categories : await _dbHelper.getCategories();
+    final matched = categories.where((c) => c['categoryName'] == data.categoryName);
+    final category = matched.isNotEmpty
+        ? matched.first
+        : categories.cast<Map<String, dynamic>?>().firstWhere(
+            (c) => c!['categoryName'] == 'Misc',
+            orElse: () => null);
+
+    List<Map<String, dynamic>> subcategories = [];
+    int? subId;
+    if (category != null) {
+      subcategories = await _dbHelper.getSubcategories(category['categoryId']);
+      final hint = data.subCategoryHint?.toLowerCase();
+      if (hint != null) {
+        for (final sc in subcategories) {
+          if ((sc['subCategoryName'] as String).toLowerCase().contains(hint)) {
+            subId = sc['subCategoryId'];
+            break;
+          }
+        }
+      }
+    }
+    if (!mounted) return;
+
+    // Fill the form only; nothing is saved until the user taps Save.
+    setState(() {
+      _transactionType = 'Expense';
+      if (data.amount != null) {
+        _amount = data.amount!;
+        _amountController.text = data.amount!.toStringAsFixed(2);
+      }
+      if (data.date != null) {
+        _date = DateFormat('yyyy-MM-dd').format(data.date!);
+        _dateController.text = _date;
+      }
+      if (data.merchant != null) _descriptionController.text = data.merchant!;
+      if (data.paymentMethod != null) _paymentMethod = data.paymentMethod!;
+      _categories = categories;
+      _isLoadingCategories = false;
+      _selectedCategory = category?['categoryId'];
+      _subcategories = subcategories;
+      _selectedSubcategory = subId;
+    });
+
+    final missing = [
+      if (data.amount == null) 'amount',
+      if (data.date == null) 'date',
+    ];
+    _showSnack(missing.isEmpty
+        ? 'Receipt scanned. Please verify the details and save.'
+        : 'Receipt scanned, but the ${missing.join(' and ')} could not be read. Please fill ${missing.length > 1 ? 'them' : 'it'} in.');
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _loadRecentSms() async {
     if (widget.expense != null) return; // Don't load for edit mode
     
@@ -335,6 +439,19 @@ class _ExpensePageState extends State<ExpensePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
+                        if (widget.expense == null) ...[
+                          OutlinedButton.icon(
+                            onPressed: _isScanningReceipt ? null : _scanReceipt,
+                            icon: _isScanningReceipt
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2))
+                                : const Icon(Icons.document_scanner_outlined),
+                            label: Text(_isScanningReceipt ? 'Scanning receipt...' : 'Scan receipt'),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         SegmentedButton<String>(
                           segments: const [
                             ButtonSegment(value: 'Income', label: Text('Income'), icon: Icon(Icons.south_west)),
