@@ -231,6 +231,25 @@ class _ExpensePageState extends State<ExpensePage> {
     }
   }
 
+  // Reset the form to the same defaults as a fresh Add Transaction screen.
+  void _clearForm() {
+    _formKey.currentState?.reset();
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      _dateController.text = _date;
+      _name = '';
+      _descriptionController.clear();
+      _amount = 0.0;
+      _amountController.text = _amount.toString();
+      _transactionType = 'Expense';
+      _paymentMethod = 'Cash';
+      _selectedCategory = null;
+      _selectedSubcategory = null;
+      _subcategories = [];
+    });
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -584,6 +603,14 @@ class _ExpensePageState extends State<ExpensePage> {
                           text: widget.expense != null ? 'Save Transaction' : 'Add Transaction',
                           icon: Icons.check,
                         ),
+                        if (widget.expense == null) ...[
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            onPressed: _clearForm,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Clear'),
+                          ),
+                        ],
                         
                         // SMS Suggestions Section
                         if (widget.expense == null && (_isLoadingSms || _recentSmsTransactions.isNotEmpty)) ...[
