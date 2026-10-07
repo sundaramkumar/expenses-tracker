@@ -22,11 +22,11 @@ class AddTransactionConfigActivity : Activity() {
     private lateinit var submitBtn: Button
     private lateinit var cancelBtn: Button
     private lateinit var closeBtn: ImageButton
-    
+
     private var selectedDate: Calendar = Calendar.getInstance()
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private val displayFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
-    
+
     private var categories = mutableListOf<Pair<Int, String>>()
     private var subcategories = mutableListOf<Pair<Int, String>>()
     private var allSubcategories = mutableListOf<Triple<Int, String, Int>>() // id, name, categoryId
@@ -59,14 +59,14 @@ class AddTransactionConfigActivity : Activity() {
         submitBtn.setOnClickListener { saveTransaction() }
         cancelBtn.setOnClickListener { finish() }
         closeBtn.setOnClickListener { finish() }
-        
+
         dateLayout.setOnClickListener { showDatePicker() }
-        
+
         val rgType = findViewById<RadioGroup>(R.id.rg_type)
         rgType.setOnCheckedChangeListener { _, _ ->
             loadCategories()
         }
-        
+
         categorySpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 if (categories.isNotEmpty()) {
@@ -95,18 +95,18 @@ class AddTransactionConfigActivity : Activity() {
     }
 
     private fun loadCategories() {
-        val db = openOrCreateDatabase("expensestracker.db", MODE_PRIVATE, null)
-        
+        val db = openOrCreateDatabase("spendIt.db", MODE_PRIVATE, null)
+
         categories.clear()
         val cursor = db.rawQuery("SELECT categoryId, categoryName FROM category", null)
-        
+
         while (cursor.moveToNext()) {
             val id = cursor.getInt(0)
             val name = cursor.getString(1)
             categories.add(Pair(id, name))
         }
         cursor.close()
-        
+
         // Load all subcategories for filtering
         allSubcategories.clear()
         val subCursor = db.rawQuery("SELECT subCategoryId, subCategoryName, categoryId FROM subcategory", null)
@@ -115,11 +115,11 @@ class AddTransactionConfigActivity : Activity() {
         }
         subCursor.close()
         db.close()
-        
+
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories.map { it.second })
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         categorySpinner.adapter = adapter
-        
+
         if (categories.isNotEmpty()) {
             loadSubcategories(categories[0].first)
         }
@@ -132,7 +132,7 @@ class AddTransactionConfigActivity : Activity() {
                 .filter { it.third == categoryId }
                 .map { Pair(it.first, it.second) }
         )
-        
+
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, subcategories.map { it.second })
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         subcategorySpinner.adapter = adapter
@@ -141,33 +141,33 @@ class AddTransactionConfigActivity : Activity() {
     private fun saveTransaction() {
         val amount = amountEt.text.toString().trim()
         val description = descriptionEt.text.toString().trim()
-        
+
         if (amount.isEmpty()) {
             Toast.makeText(this, "Please enter amount", Toast.LENGTH_SHORT).show()
             return
         }
-        
+
         if (categories.isEmpty()) {
             Toast.makeText(this, "No categories available", Toast.LENGTH_SHORT).show()
             return
         }
-        
+
         val isIncome = rbIncome.isChecked
         val categoryPos = categorySpinner.selectedItemPosition
         val subcategoryPos = subcategorySpinner.selectedItemPosition
-        
+
         val categoryId = categories[categoryPos].first
         val subcategoryId = if (subcategories.isNotEmpty()) subcategories[subcategoryPos].first else categoryId
         val date = dateFormat.format(selectedDate.time)
         val amountValue = amount.toDoubleOrNull()
-        
+
         if (amountValue == null || amountValue <= 0) {
             Toast.makeText(this, "Please enter a valid amount", Toast.LENGTH_SHORT).show()
             return
         }
-        
+
         try {
-            val db = openOrCreateDatabase("expensestracker.db", MODE_PRIVATE, null)
+            val db = openOrCreateDatabase("spendIt.db", MODE_PRIVATE, null)
             val values = ContentValues().apply {
                 put("userId", 1)
                 put("transactionDate", date)
@@ -178,10 +178,10 @@ class AddTransactionConfigActivity : Activity() {
                 put("categoryId", categoryId)
                 put("subCategoryId", subcategoryId)
             }
-            
+
             val result = db.insert("transactions", null, values)
             db.close()
-            
+
             if (result != -1L) {
                 Toast.makeText(this, "Transaction added successfully", Toast.LENGTH_SHORT).show()
                 finish()

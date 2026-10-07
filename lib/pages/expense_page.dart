@@ -10,6 +10,9 @@ import '../utils/intent_bridge.dart';
 import '../services/sms_service.dart';
 import '../utils/sms_parser.dart';
 import '../utils/receipt_parser.dart';
+import '../utils/ocr_rows.dart';
+import '../services/receipt_entity_service.dart';
+import '../widgets/searchable_select_field.dart';
 
 class ExpensePage extends StatefulWidget {
   final Map<String, dynamic>? expense;
@@ -46,6 +49,10 @@ class _ExpensePageState extends State<ExpensePage> {
   TextEditingController _dateController = TextEditingController();
   TextEditingController _amountController = TextEditingController();
   TextEditingController _descriptionController = TextEditingController();
+  // Last detail text we filled in from a subcategory, so we never overwrite the user's own text.
+  String? _autoDetail;
+  // Shop name read from the last scanned receipt, kept in the detail as "Subcategory - Shop".
+  String? _scanMerchant;
 
   final FocusNode _amountFocusNode = FocusNode();
   // final _valueNotifier = ValueNotifier<String>('');
@@ -231,6 +238,22 @@ class _ExpensePageState extends State<ExpensePage> {
     }
   }
 
+  String _detailText(String subName, String? merchant) =>
+      (merchant == null || merchant.isEmpty) ? subName : '$subName - $merchant';
+
+  // Show the subcategory name in the detail field unless the user has typed their own text.
+  void _fillDetailFromSubcategory(int? subCategoryId) {
+    if (subCategoryId == null) return;
+    final match = _subcategories.where((s) => s['subCategoryId'] == subCategoryId);
+    if (match.isEmpty) return;
+    final name = _detailText(match.first['subCategoryName'] as String, _scanMerchant);
+    final current = _descriptionController.text.trim();
+    if (current.isEmpty || current == _autoDetail) {
+      _descriptionController.text = name;
+      _autoDetail = name;
+    }
+  }
+
   // Reset the form to the same defaults as a fresh Add Transaction screen.
   void _clearForm() {
     _formKey.currentState?.reset();
@@ -240,6 +263,8 @@ class _ExpensePageState extends State<ExpensePage> {
       _dateController.text = _date;
       _name = '';
       _descriptionController.clear();
+      _autoDetail = null;
+      _scanMerchant = null;
       _amount = 0.0;
       _amountController.text = _amount.toString();
       _transactionType = 'Expense';
@@ -296,7 +321,19 @@ class _ExpensePageState extends State<ExpensePage> {
         _showSnack('No text found. Try a clearer, well-lit photo of the receipt.');
         return;
       }
-      await _applyReceipt(ReceiptParser.parse(result.text));
+      // Labels and amounts can come back in separate columns; rejoin them by row.
+      final text = rowsFromRecognizedText(result);
+      var data = ReceiptParser.parse(text);
+      // On-device AI fills in a date or amount the rules couldn't read.
+      if (data.date == null || data.amount == null) {
+        final extra = await ReceiptEntityService.extract(
+          text,
+          needDate: data.date == null,
+          needAmount: data.amount == null,
+        );
+        data = data.copyWith(date: extra.date, amount: extra.amount);
+      }
+      await _applyReceipt(data);
     } catch (e) {
       _showSnack('Could not scan the receipt. Please try again.');
     } finally {
@@ -338,11 +375,20 @@ class _ExpensePageState extends State<ExpensePage> {
         _amount = data.amount!;
         _amountController.text = data.amount!.toStringAsFixed(2);
       }
-      if (data.date != null) {
-        _date = DateFormat('yyyy-MM-dd').format(data.date!);
-        _dateController.text = _date;
+      // Use the date on the slip, or today if it couldn't be read.
+      _date = DateFormat('yyyy-MM-dd').format(data.date ?? DateTime.now());
+      _dateController.text = _date;
+      // Detail reads "Petrol - Bp Thirumangalam": subcategory name plus the shop.
+      String? subName;
+      for (final sc in subcategories) {
+        if (sc['subCategoryId'] == subId) subName = sc['subCategoryName'] as String;
       }
-      if (data.merchant != null) _descriptionController.text = data.merchant!;
+      _scanMerchant = data.merchant;
+      final detail = subName != null ? _detailText(subName, data.merchant) : data.merchant;
+      if (detail != null) {
+        _descriptionController.text = detail;
+        _autoDetail = detail;
+      }
       if (data.paymentMethod != null) _paymentMethod = data.paymentMethod!;
       _categories = categories;
       _isLoadingCategories = false;
@@ -353,10 +399,11 @@ class _ExpensePageState extends State<ExpensePage> {
 
     final missing = [
       if (data.amount == null) 'amount',
-      if (data.date == null) 'date',
     ];
     _showSnack(missing.isEmpty
-        ? 'Receipt scanned. Please verify the details and save.'
+        ? (data.date == null
+            ? 'Receipt scanned. The date could not be read, so today\'s date is used. Please verify and save.'
+            : 'Receipt scanned. Please verify the details and save.')
         : 'Receipt scanned, but the ${missing.join(' and ')} could not be read. Please fill ${missing.length > 1 ? 'them' : 'it'} in.');
   }
 
@@ -509,20 +556,13 @@ class _ExpensePageState extends State<ExpensePage> {
                             style: TextStyle(color: Theme.of(context).colorScheme.error),
                           )
                         else
-                          DropdownButtonFormField<int>(
-                            isExpanded: true,
+                          SearchableSelectField(
+                            label: 'Category',
+                            icon: Icons.category_outlined,
+                            options: _categories
+                                .map((c) => (id: c['categoryId'] as int, name: c['categoryName'] as String))
+                                .toList(),
                             value: _selectedCategory,
-                            menuMaxHeight: 360,
-                            decoration: const InputDecoration(
-                              labelText: 'Category',
-                              prefixIcon: Icon(Icons.category_outlined),
-                            ),
-                            items: _categories.map((category) {
-                              return DropdownMenuItem<int>(
-                                value: category['categoryId'] as int,
-                                child: Text(category['categoryName'] as String),
-                              );
-                            }).toList(),
                             onChanged: (int? newValue) {
                               setState(() {
                                 _selectedCategory = newValue;
@@ -541,21 +581,17 @@ class _ExpensePageState extends State<ExpensePage> {
                         else if (_isLoadingSubcategories)
                           const LinearProgressIndicator(minHeight: 2)
                         else
-                          DropdownButtonFormField<int>(
-                            isExpanded: true,
+                          SearchableSelectField(
+                            label: 'Subcategory',
+                            icon: Icons.label_outline,
+                            options: _subcategories
+                                .map((c) => (id: c['subCategoryId'] as int, name: c['subCategoryName'] as String))
+                                .toList(),
                             value: _selectedSubcategory,
-                            menuMaxHeight: 360,
-                            decoration: const InputDecoration(
-                              labelText: 'Subcategory',
-                              prefixIcon: Icon(Icons.label_outline),
-                            ),
-                            items: _subcategories.map((subcategory) {
-                              return DropdownMenuItem<int>(
-                                value: subcategory['subCategoryId'] as int,
-                                child: Text(subcategory['subCategoryName'] as String),
-                              );
-                            }).toList(),
-                            onChanged: (int? newValue) => setState(() => _selectedSubcategory = newValue),
+                            onChanged: (int? newValue) => setState(() {
+                              _selectedSubcategory = newValue;
+                              _fillDetailFromSubcategory(newValue);
+                            }),
                             validator: (value) => value == null ? 'Please select a subcategory.' : null,
                             onSaved: (value) => _selectedSubcategory = value,
                           ),

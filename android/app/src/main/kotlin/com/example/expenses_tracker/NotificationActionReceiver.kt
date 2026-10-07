@@ -39,13 +39,13 @@ class NotificationActionReceiver : BroadcastReceiver() {
             val referenceNumber = json.optString("referenceNumber", null)
 
             // Open database
-            val db = context.openOrCreateDatabase("expensestracker.db", Context.MODE_PRIVATE, null)
+            val db = context.openOrCreateDatabase("spendIt.db", Context.MODE_PRIVATE, null)
 
             // Get categories
             val categoryCursor = db.rawQuery("SELECT categoryId, categoryName FROM category", null)
             var categoryId = 1
             var suggestedCategory = getCategoryFromMerchant(merchant)
-            
+
             while (categoryCursor.moveToNext()) {
                 val catId = categoryCursor.getInt(0)
                 val catName = categoryCursor.getString(1)
@@ -101,7 +101,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
     private fun getCategoryFromMerchant(merchant: String): String {
         val merchantLower = merchant.lowercase()
-        
+
         return when {
             Regex("zomato|swiggy|uber\\s*eats|food|restaurant|cafe|dominos|pizza|kfc|mcdonalds|burger|starbucks").containsMatchIn(merchantLower) -> "Food"
             Regex("amazon|flipkart|myntra|ajio|shoppers|reliance|dmart|big\\s*bazaar|mall").containsMatchIn(merchantLower) -> "Personal"

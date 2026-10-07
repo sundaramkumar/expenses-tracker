@@ -2,6 +2,10 @@ import 'package:expenses_tracker/utils/receipt_parser.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  taxTests();
+  merchantGuardTests();
+  realMlKitTests();
+  missingTotalTests();
   test('Smart Bazaar HDFC card slip (no year, no "total" word)', () {
     final r = ReceiptParser.parse('''
 HDFC Bank
@@ -146,5 +150,111 @@ Plutus v10.1.1 RBL''');
     expect(r.merchant, 'BP Thirumangalam');
     expect(r.categoryName, 'Vehicle');
     expect(r.paymentMethod, 'Card');
+  });
+}
+
+void taxTests() {
+  test('total printed before CGST/SGST, payable after', () {
+    final r = ReceiptParser.parse('''
+Fresh Mart
+Date 05-10-2026
+Rice 2 kg 120.00
+Oil 1 ltr 180.00
+Total 300.00
+CGST 2.5% 7.50
+SGST 2.5% 7.50
+Net Payable 315.00
+Cash 500.00
+Change 185.00''');
+    expect(r.amount, 315.0);
+  });
+
+  test('pre-tax total with no total below taxes: taxes are added', () {
+    final r = ReceiptParser.parse('''
+Hardware Store
+Date 05-10-2026
+Item A 1000.00
+Total 1000.00
+CGST 9% 90.00
+SGST 9% 90.00''');
+    expect(r.amount, 1180.0);
+  });
+
+  test('round off after taxes', () {
+    final r = ReceiptParser.parse('''
+Cafe
+Date 05-10-2026
+Subtotal 607.62
+Total 607.62
+CGST 2.5% 15.19
+SGST 2.5% 15.19
+Round off 0.38
+Amount Payable 638.00''');
+    expect(r.amount, 638.0);
+  });
+
+  test('already tax-inclusive total below taxes is unchanged', () {
+    final r = ReceiptParser.parse('''
+Cafe
+Subtotal 607.62
+CGST 2.5% 15.19
+SGST 2.5% 15.19
+TOTAL Rs.638''');
+    expect(r.amount, 638.0);
+  });
+
+  test('GST included in total is not added again', () {
+    final r = ReceiptParser.parse('''
+Shop
+Total 1180.00
+Includes GST 18% 180.00''');
+    expect(r.amount, 1180.0);
+  });
+}
+
+void missingTotalTests() {
+  test('OCR missed the TOTAL line: subtotal plus taxes', () {
+    final r = ReceiptParser.parse('''
+Thank U Cafe-Surya Nagar
+Date 28 Sept 2026
+Margheritta Pizza x1 94.29
+Peppy Paneer Pizza x1 199.05
+Subtotal 607.62
+CGST 2.5% 15.19
+SGST 2.5% 15.19
+Thank You''');
+    expect(r.amount, 638.0);
+  });
+
+  test('OCR missed label but kept Rs.638', () {
+    final r = ReceiptParser.parse('''
+Thank U Cafe-Surya Nagar
+Subtotal 607.62
+CGST 2.5% 15.19
+SGST 2.5% 15.19
+Rs.638''');
+    expect(r.amount, 638.0);
+  });
+}
+
+void realMlKitTests() {
+  // Exact text ML Kit returned on a phone: whole columns merged into single lines.
+  test('merged-column ML Kit text no longer gives 639.33', () {
+    final r = ReceiptParser.parse('''
+POS-SNR-20260928-095 dining D10 9999999999 Muthulakshmi 94.29 199.05 71.43 109.52 133.33 607.62 15.19 15.19 Rs.638
+28 Sept 2026, 07:34 pm Thank U Cafeâ aESurya Nagar
+RETAIL INVOICE Thark U Cafe-Surya Nagar Surya Nagar A Ünit of IAB SOlutions Pvt. Ltd. GSTIN:33AADCI5736H1ZL FSSAI Lic No. 12425012000961 Thank You
+Order Date Type Table No Phone Biller Served By Margheritta Pizza xl 1 x 94.29 Peppy Paneer Pizza x1 1x 199.05 Honey Cake_4 Pcs x1 1x 71.43 ates Halwa (Gms) X250 250 x 0.44 jamond Kunafa (Gms) x100 100 x 1.33 Subtotal CGST 2.5% SGST 2.5% TOTAL''');
+    expect(r.amount, 638.0);
+  });
+}
+
+void merchantGuardTests() {
+  test('merged number row is never used as the merchant', () {
+    final r = ReceiptParser.parse('''
+07:34 pm dining D10 9999999999 Nagar 94.29 199.05 71.43 109.52 133.33 607.62 15.19 15.19 Rs.638
+Thank U Cafe-Surya Nagar
+TOTAL Rs.638''');
+    expect(r.merchant, 'Thank U Cafe-Surya Nagar');
   });
 }

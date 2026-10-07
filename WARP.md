@@ -45,7 +45,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 - Persistence layer (SQLite via sqflite)
   - `lib/databases/database_helper.dart` is a singleton responsible for:
-    - Opening a `sqflite` DB at `expensestracker.db` and creating tables: `transactions`, `category`, `subcategory`, `profile`.
+    - Opening a `sqflite` DB at `spendIt.db` and creating tables: `transactions`, `category`, `subcategory`, `profile`.
     - Seeding default `category` and `subcategory` data on first create.
     - CRUD and query helpers, including joins for rendering transactions with category/subcategory names and date-range utilities for dashboard/reports.
   - Simple data classes:

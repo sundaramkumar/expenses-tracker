@@ -14,6 +14,16 @@ class ReceiptData {
     this.subCategoryHint,
     this.paymentMethod,
   });
+
+  /// Returns a copy, keeping the existing value when the new one is null.
+  ReceiptData copyWith({double? amount, DateTime? date}) => ReceiptData(
+        amount: amount ?? this.amount,
+        date: date ?? this.date,
+        merchant: merchant,
+        categoryName: categoryName,
+        subCategoryHint: subCategoryHint,
+        paymentMethod: paymentMethod,
+      );
 }
 
 /// Extracts expense fields from raw OCR text of a bill/receipt.
@@ -22,12 +32,16 @@ class ReceiptParser {
 
   // Lines with these words carry the payable total, in priority order.
   static final _totalKeys = [
-    RegExp(r'(grand\s*total|net\s*(?:amount|payable|total)|amount\s*(?:payable|due|paid)|total\s*(?:amount|payable|due)|bill\s*amount|balance\s*due)', caseSensitive: false),
+    RegExp(r'(grand\s*total|net\s*(?:amount|payable|total)|amount\s*(?:payable|due|paid)|total\s*(?:amount|payable|due|value|invoice)|bill\s*(?:amount|total)|invoice\s*(?:total|value|amount)|balance\s*due|total\s*\(?\s*incl|inclusive\s*of|round(?:ed)?\s*(?:off\s*)?total|\bpayable\b|amount\s*to\s*pay|\bto\s*pay\b)', caseSensitive: false),
     // Card-machine slips: "SALE AMT", "TOTAL AMT", "BASE AMT", "Amount(Rs.)"
     RegExp(r'\b(?:sale|total|base|txn|net)\s*amt\b|\bamount\s*\(\s*rs|\bsale\s*amount', caseSensitive: false),
     RegExp(r'\btotal\b', caseSensitive: false),
   ];
-  static final _ignoreTotal = RegExp(r'sub\s*-?\s*total|total\s*(?:qty|quantity|items|savings|discount|gst|tax)|cgst|sgst|igst|vat', caseSensitive: false);
+  static final _ignoreTotal = RegExp(r'sub\s*-?\s*total|total\s*(?:qty|quantity|items|savings|discount|gst|tax)|before\s*tax|excl|taxable|pre-?\s*tax|without\s*tax|tax\s*amount|cgst|sgst|igst|vat', caseSensitive: false);
+
+  // Tax lines (CGST, SGST, GST 5%, VAT, cess...) that are added on top of a subtotal.
+  static final _taxLine = RegExp(r'\b(?:cgst|sgst|igst|utgst|gst|vat|cess|service\s*tax|sales\s*tax|tax)\b', caseSensitive: false);
+  static final _notAddedTax = RegExp(r'gstin|taxable|total\s*tax|before\s*tax|excl|incl|tax\s*invoice|hsn|tax\s*summary|tax\s*id', caseSensitive: false);
 
   static ReceiptData parse(String text) {
     final lines = text
@@ -57,27 +71,91 @@ class ReceiptParser {
         .toList();
   }
 
+  static String _stripPercent(String line) =>
+      line.replaceAll(RegExp(r'[0-9]+(?:\.[0-9]+)?\s*%'), ' ');
+
   static double? _extractAmount(List<String> lines) {
+    final found = _findTotal(lines);
+    if (found != null) return _afterTax(lines, found.$1, found.$2);
+
+    // No labelled total (e.g. OCR missed the big "TOTAL" line): take the largest
+    // amount on the receipt - decimals, or whole numbers with a currency sign.
+    final noise = RegExp(r'phone|mob|tel|gstin|invoice|bill\s*no|\bno\b|fssai|order', caseSensitive: false);
+    final candidate = RegExp(r'(?:rs\.?|inr|₹)\s*([0-9]{1,3}(?:,[0-9]{2,3})*(?:\.[0-9]{1,2})?|[0-9]+)|([0-9]{1,3}(?:,[0-9]{2,3})*\.[0-9]{2})', caseSensitive: false);
+    double? best;
+    var bestIdx = -1;
+    for (var i = 0; i < lines.length; i++) {
+      final line = _stripPercent(lines[i]);
+      if (noise.hasMatch(line)) continue;
+      for (final m in candidate.allMatches(line)) {
+        final v = _parseNum(m.group(1) ?? m.group(2)!);
+        if (v != null && (best == null || v > best)) {
+          best = v;
+          bestIdx = i;
+        }
+      }
+    }
+    // If the largest figure is a pre-tax subtotal, add the taxes below it.
+    return best == null ? null : _afterTax(lines, best, bestIdx);
+  }
+
+  /// The labelled total and the line it was on.
+  static (double, int)? _findTotal(List<String> lines) {
     for (final key in _totalKeys) {
       for (var i = lines.length - 1; i >= 0; i--) {
         final line = lines[i];
         if (!key.hasMatch(line) || _ignoreTotal.hasMatch(line)) continue;
-        var nums = _numbersIn(line);
+        var nums = _numbersIn(_stripPercent(line));
         // OCR often puts the value on the next line.
-        if (nums.isEmpty && i + 1 < lines.length) nums = _numbersIn(lines[i + 1]);
-        if (nums.isNotEmpty) return nums.last;
+        if (nums.isEmpty && i + 1 < lines.length) nums = _numbersIn(_stripPercent(lines[i + 1]));
+        if (nums.isNotEmpty) return (nums.last, i);
       }
     }
-    // Fallback: largest decimal-looking amount on the receipt.
-    double? best;
-    for (final line in lines) {
-      if (RegExp(r'phone|mob|tel|gstin|invoice|bill\s*no|\bno\b', caseSensitive: false).hasMatch(line)) continue;
-      for (final m in RegExp(r'([0-9]{1,3}(?:,[0-9]{2,3})*\.[0-9]{2})').allMatches(line)) {
-        final v = _parseNum(m.group(1)!);
-        if (v != null && (best == null || v > best)) best = v;
+    return null;
+  }
+
+  /// If tax lines come after the picked total, it was a pre-tax figure.
+  /// Prefer the payable total printed below the taxes; otherwise add the taxes.
+  static double _afterTax(List<String> lines, double total, int totalIdx) {
+    var taxSum = 0.0;
+    var firstTax = -1;
+    for (var i = totalIdx + 1; i < lines.length; i++) {
+      final line = lines[i];
+      if (!_taxLine.hasMatch(line) || _notAddedTax.hasMatch(line)) continue;
+      // A real tax line is short and ends with its amount ("CGST 2.5% 15.19").
+      // Long lines are merged OCR blocks and would add unrelated numbers.
+      if (line.length > 40 || !RegExp(r'[0-9][0-9,]*\.?[0-9]*\s*$').hasMatch(line)) continue;
+      final nums = _numbersIn(_stripPercent(line));
+      if (nums.isEmpty) continue;
+      if (firstTax < 0) firstTax = i;
+      taxSum += nums.last;
+    }
+    if (firstTax < 0) return total; // no taxes below: already tax-inclusive
+
+    // A larger total below the taxes, within what the taxes could explain
+    // (this also ignores "cash given" / "change" lines).
+    final bound = total + taxSum + 1.5;
+    final payKey = RegExp(r'total|amount|payable|\bnet\b|\bdue\b|\bpay\b|round|bill|invoice|\bnet\b', caseSensitive: false);
+    final tender = RegExp(r'cash|tender|change|received|balance|refund|return', caseSensitive: false);
+    double? labelled;
+    double? closest;
+    for (var i = firstTax + 1; i < lines.length; i++) {
+      final line = lines[i];
+      if (_ignoreTotal.hasMatch(line.replaceAll(RegExp(r'total', caseSensitive: false), 'x')) && _taxLine.hasMatch(line)) continue;
+      if (tender.hasMatch(line) && !RegExp(r'amount\s*(?:paid|payable)', caseSensitive: false).hasMatch(line)) continue;
+      var nums = _numbersIn(_stripPercent(line));
+      if (nums.isEmpty && payKey.hasMatch(line) && i + 1 < lines.length) {
+        nums = _numbersIn(_stripPercent(lines[i + 1]));
+      }
+      for (final n in nums) {
+        if (n <= total + 0.005 || n > bound) continue;
+        if (payKey.hasMatch(line) && !_taxLine.hasMatch(line)) labelled = n;
+        if (closest == null || (n - (total + taxSum)).abs() < (closest - (total + taxSum)).abs()) closest = n;
       }
     }
-    return best;
+    if (labelled != null) return labelled;
+    if (closest != null && (closest - (total + taxSum)).abs() <= 1.5) return closest;
+    return double.parse((total + taxSum).toStringAsFixed(2));
   }
 
   static const _months = {
@@ -159,6 +237,8 @@ class ReceiptParser {
         caseSensitive: false);
     for (final line in lines.take(8)) {
       if (skip.hasMatch(line) || line.length < 3) continue;
+      // Skip merged OCR rows: a shop name is short and mostly letters, not a run of amounts.
+      if (line.length > 60 || RegExp(r'\d+[.,]\d{2}').allMatches(line).length >= 2) continue;
       if (RegExp(r'[A-Za-z]{3}').hasMatch(line)) return _titleCase(line);
     }
     return null;

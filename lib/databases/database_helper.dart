@@ -25,12 +25,13 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     // Enable FFI-based SQLite for desktop platforms
-    if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
+    if (!kIsWeb &&
+        (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
 
-    String path = join(await getDatabasesPath(), 'expensestracker.db');
+    String path = join(await getDatabasesPath(), 'spendIt.db');
 
     return await openDatabase(
       path,

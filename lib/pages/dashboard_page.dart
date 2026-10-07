@@ -212,10 +212,16 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(t['description'] ?? ''),
+                      Text(
+                        t['description'] ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 1),
                       Text(
                         t['transactionDate'] ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 10, color: Colors.grey),
                       ),
                     ],
@@ -306,10 +312,16 @@ class _DashboardPageState extends State<DashboardPage> with AutomaticKeepAliveCl
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(t['description'] ?? ''),
+                      Text(
+                        t['description'] ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 1),
                       Text(
                         t['transactionDate'] ?? '',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(fontSize: 10, color: Colors.grey),
                       ),
                     ],
